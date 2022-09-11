@@ -1209,6 +1209,10 @@ for each player do
         for each player do
             if net_temp_object.shape_contains(current_player.biped) then
                 current_player.apply_traits(script_traits[13])
+				script_widget[2].set_visibility(current_player, true)
+				script_widget[2].set_text("Fortified")
+			alt
+				script_widget[2].set_visibility(current_player, false)
             end
         end
     end
