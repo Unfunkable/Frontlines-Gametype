@@ -30,6 +30,7 @@ declare player.object[1] with network priority local
 declare player.object[2] with network priority local
 declare player.timer[0]
 declare player.timer[1]
+declare player.player[0] with network priority local
 
 --== ANVIL EDITOR VARIABLES ==--
 declare global.number[9] with network priority low
@@ -1213,15 +1214,24 @@ for each player do
     if net_temp_object.class == class.corpsman then
         net_temp_object.set_shape(cylinder, 23, 23, 23)
 		temp_player = current_player
+		temp_int = 0
         for each player do
             if net_temp_object.shape_contains(current_player.biped) and current_player.team == temp_player.team then
+				current_player.player[0] == temp_player
                 current_player.apply_traits(script_traits[13])
 				script_widget[2].set_visibility(current_player, true)
-				script_widget[2].set_text("Fortified")
+				script_widget[2].set_text("Fortified by %s\r\nDamage resistance and faster shield recharge", hud_player.player[0])
+				if current_player != temp_player then
+					temp_int += 1
+				end
 			alt
 				script_widget[2].set_visibility(current_player, false)
             end
         end
+		if temp_int > 0 then
+			script_widget[3].set_visibility(mod_player, temp_player, true)
+			script_widget[3].set_text("Fortifying allies", hud_player)
+		end
     end
     if net_temp_object.class == class.grenadier then
         current_player.apply_traits(script_traits[14])
@@ -1265,7 +1275,7 @@ for each player do
     net_temp_object = current_player.biped
     if net_temp_object.class == class.major and current_player.ability_timer > 0 then
         script_widget[0].set_visibility(current_player, true)
-        script_widget[0].set_text("OVERCHARGE %n", hud_player.ability_timer)
+        script_widget[0].set_text("OVERCHARGE %n\r\nWeapons won't overheat", hud_player.ability_timer)
     end
     if net_temp_object.class == class.ultra and current_player.ability_timer > 0 then
         script_widget[1].set_visibility(current_player, true)
