@@ -1124,7 +1124,7 @@ for each player do
         if current_player.ability_cooldown > 0 then
             current_player.apply_traits(script_traits[11])
         end
-        net_temp_object.set_shape(cylinder, 7, 7, 7)
+        net_temp_object.set_shape(cylinder, 23, 23, 23)
         current_player.ability_cooldown.set_rate(-100%)
         net_temp_object2 = current_player.try_get_armor_ability()
         if net_temp_object2.is_in_use() then
@@ -1140,7 +1140,6 @@ for each player do
         if current_player.ability_timer > 0 then
             if net_temp_object2.is_of_type(plasma_rifle) or net_temp_object2.is_of_type(plasma_pistol) or net_temp_object2.is_of_type(detached_plasma_cannon) or net_temp_object.is_of_type(plasma_repeater) then
                 current_player.apply_traits(script_traits[9])
-                net_temp_object.set_shape_visibility(everyone)
             end
         end
         if current_player.ability_timer == 0 then
@@ -1149,7 +1148,14 @@ for each player do
         temp_player = current_player
         for each player do
             net_temp_object2 = current_player.try_get_weapon(primary)
-            if net_temp_object.shape_contains(current_player.biped) and temp_player.ability_timer > 0 then
+			if net_temp_object2.is_of_type(plasma_rifle) or net_temp_object2.is_of_type(plasma_pistol) or net_temp_object2.is_of_type(detached_plasma_cannon) or net_temp_object.is_of_type(plasma_repeater) or current_player == temp_player then
+				if temp_player.ability_timer > 0 and current_player.team == temp_player.team then
+					net_temp_object.set_shape_visibility(mod_player, current_player, 1)
+				alt
+					net_temp_object.set_shape_visibility(mod_player, current_player, 0)
+				end
+			end
+            if net_temp_object.shape_contains(current_player.biped) and temp_player.ability_timer > 0 and current_player.team == temp_player.team then
                 if net_temp_object2.is_of_type(plasma_rifle) or net_temp_object2.is_of_type(plasma_pistol) or net_temp_object2.is_of_type(detached_plasma_cannon) or net_temp_object.is_of_type(plasma_repeater) then
                     current_player.apply_traits(script_traits[9])
                 end
@@ -1205,9 +1211,10 @@ for each player do
         current_player.apply_traits(script_traits[12])
     end
     if net_temp_object.class == class.corpsman then
-        net_temp_object.set_shape(cylinder, 7, 7, 7)
+        net_temp_object.set_shape(cylinder, 23, 23, 23)
+		temp_player = current_player
         for each player do
-            if net_temp_object.shape_contains(current_player.biped) then
+            if net_temp_object.shape_contains(current_player.biped) and current_player.team == temp_player.team then
                 current_player.apply_traits(script_traits[13])
 				script_widget[2].set_visibility(current_player, true)
 				script_widget[2].set_text("Fortified")
@@ -1223,28 +1230,30 @@ end
 
 -- Anti-tryhard
 if script_option[6] == 1 then
-    net_temp_object = current_player.biped
-    if net_temp_object.class != class.marksman then
-        for each object do
-            if current_object.is_of_type(dmr) then
-                current_object.set_pickup_permissions(mod_player, current_player, 0)
-            end
-        end
-    end
-    if net_temp_object.class != class.ranger then
-        for each object do
-            if current_object.is_of_type(needle_rifle) then
-                current_object.set_pickup_permissions(mod_player, current_player, 0)
-            end
-        end
-    end
-    if net_temp_object.class != class.zealot then
-        for each object do
-            if current_object.is_of_type(energy_sword) then
-                current_object.set_pickup_permissions(mod_player, current_player, 0)
-            end
-        end
-    end
+	for each player do
+		net_temp_object = current_player.biped
+		if net_temp_object.class != class.marksman then
+			for each object do
+				if current_object.is_of_type(dmr) then
+					current_object.set_pickup_permissions(mod_player, current_player, 0)
+				end
+			end
+		end
+		if net_temp_object.class != class.ranger then
+			for each object do
+				if current_object.is_of_type(needle_rifle) then
+					current_object.set_pickup_permissions(mod_player, current_player, 0)
+				end
+			end
+		end
+		if net_temp_object.class != class.zealot then
+			for each object do
+				if current_object.is_of_type(energy_sword) then
+					current_object.set_pickup_permissions(mod_player, current_player, 0)
+				end
+			end
+		end
+	end
 end
 
 -- Ability widgets
