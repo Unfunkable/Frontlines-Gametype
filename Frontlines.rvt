@@ -838,6 +838,7 @@ for each player do
 	end
 	if current_player.out_of_bounds = 0 and current_player.softkill != no_object then
 		current_player.softkill.delete()
+	end
 end
 
 -- Assault
