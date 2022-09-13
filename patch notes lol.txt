@@ -1,0 +1,9 @@
+FEATURES
+- New ability system, each class has a unique special ability outside of their armor ability
+- Elite players will now take control of campaign variants of elites with (mostly) accurate colors
+- Dynamic kill boundaries which prevent spawn killing
+- Assault final phase, which has players destroy the final objective instead of capturing it
+- Changed default loadouts to pair better with new special abilities
+
+BUG FIXES
+- The primary respawn should now consistently be the closest to the frontline
