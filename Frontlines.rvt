@@ -30,7 +30,7 @@ declare player.object[2] with network priority local
 declare player.timer[0]
 declare player.timer[1]
 declare player.player[0] with network priority local
-declare player.number[0] with newtwork priority low
+declare player.number[0] with network priority low
 
 --== ANVIL EDITOR VARIABLES ==--
 declare global.number[9] with network priority low
@@ -465,30 +465,30 @@ for each object with label "pregame" do
 end
 
 -- Determines who is attacking first if the option is set to "Map default"
-	if phase == -1 then
-		if script_option[1] == -1 then
-			for each object with label "s_first_attack" do
-				if current_object.spawn_sequence == 0 then 
-					phase_objective = 0
-				end
-				if current_object.spawn_sequence == 1 then
-					phase_objective = 1 
-				end
-				if current_object.spawn_sequence == 2 then 
-					phase_objective = 2 
-				end
+if phase == -1 then
+	if script_option[1] == -1 then
+		for each object with label "s_first_attack" do
+			if current_object.spawn_sequence == 0 then 
+				phase_objective = 0
+			end
+			if current_object.spawn_sequence == 1 then
+				phase_objective = 1 
+			end
+			if current_object.spawn_sequence == 2 then 
+				phase_objective = 2 
 			end
 		end
-		if script_option[1] == 0 then -- If "First Attack" is set to "Both"
-			phase_objective = 0
-		end
-		if script_option[1] == 1 then -- If "First Attack" is set to "Spartans"
-			phase_objective = 1 
-		end
-		if script_option[1] == 2 then -- If "First Attack" is set to "Elites"
-			phase_objective = 2 
-		end
 	end
+	if script_option[1] == 0 then -- If "First Attack" is set to "Both"
+		phase_objective = 0
+	end
+	if script_option[1] == 1 then -- If "First Attack" is set to "Spartans"
+		phase_objective = 1 
+	end
+	if script_option[1] == 2 then -- If "First Attack" is set to "Elites"
+		phase_objective = 2 
+	end
+end
 
 
 do 
@@ -836,7 +836,7 @@ for each player do
 			temp_object.team = team[0]
 		end
 	end
-	if current_player.out_of_bounds = 0 and current_player.softkill != no_object then
+	if current_player.out_of_bounds == 0 and current_player.softkill != no_object then
 		current_player.softkill.delete()
 	end
 end
@@ -985,6 +985,14 @@ do
 	end
 end
 
+-- Vehicle damage boost
+for each player do
+	temp_object = current_player.try_get_vehicle()
+	if temp_object.has_forge_label("damage_boost") then
+		current_player.apply_traits(script_traits[12])
+	end
+end
+
 
 --=== LOADOUT SYSTEM ===--
 
@@ -1020,6 +1028,7 @@ function apply_player_info()
     current_player.add_weapon(current_player.object[0])
     current_player.add_weapon(current_player.object[1])
 end
+
 
 -- Class detection
 for each player do
@@ -1078,7 +1087,7 @@ for each player do
                 current_player.plasma_grenades = 1
                 current_player.frag_grenades = 0
                 temp_object2.class = class.ultra
-				game.show_message_to(current_player, none "Champion selected: Berserk when shields drop")
+				game.show_message_to(current_player, none, "Champion selected: Berserk when shields drop")
             end
             if temp_object.is_of_type(jetpack) then -- Ranger
                 save_player_info()
@@ -1229,7 +1238,7 @@ for each player do
 		temp_int = 0
         for each player do
             if temp_object.shape_contains(current_player.biped) and current_player.team == temp_player.team then
-				current_player.player[0] == temp_player
+				current_player.player[0] = temp_player
                 current_player.apply_traits(script_traits[13])
 				script_widget[2].set_visibility(current_player, true)
 				script_widget[2].set_text("Fortified by %s\r\nDamage resistance and faster shield recharge", hud_player.player[0])
@@ -1241,8 +1250,8 @@ for each player do
             end
         end
 		if temp_int > 0 then
-			script_widget[3].set_visibility(mod_player, temp_player, true)
-			script_widget[3].set_text("Fortifying allies", hud_player)
+			script_widget[3].set_visibility(temp_player, true)
+			script_widget[3].set_text("Fortifying allies")
 		end
     end
     if temp_object.class == class.grenadier then
@@ -1274,6 +1283,14 @@ if script_option[6] == 1 then
 					current_object.set_pickup_permissions(mod_player, current_player, 0)
 				end
 			end
+		end
+	end
+	for each player do
+		temp_object = current_player.biped
+		temp_object2 = current_player.try_get_weapon(primary)
+		if temp_object.class = class.marksman and not temp_object2.is_of_type(dmr) then
+			current_player.biped.remove_weapon(primary, false)
+			game.show_message_to(current_player, none, "Weapon prohibited")
 		end
 	end
 end
