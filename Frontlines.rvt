@@ -70,20 +70,20 @@ alias phase = global.number[2]
 alias phase_objective = global.number[3] -- 0 = both teams attacking, 1 = spartan team attacking, 2 = elite team attacking.
 alias reds = object.number[0]
 alias blues = object.number[1]
-alias softkill = player.object[2]
+alias softkill_object = player.object[2]
 alias capture_timer = object.timer[0]
 alias music_timer = global.timer[0]
 alias max_territories = global.number[4]
 alias declared_sudden_death = global.number[5]
 alias sudden_death_active = global.number[6]
 alias temp_int = global.number[1]
-alias primary_respawn = player.object[1]
+alias primary_spawn_object = player.object[1]
 alias temp_object = global.object[1]
 alias temp_object2 = global.object[4]
 alias danger_zone = object.object[0]
 alias temp_team = global.team[0]
 alias explosive = global.object[3]
-alias bomb_carrier = global.player[0]
+alias bomb_carrier_player = global.player[0]
 alias armed = object.number[0]
 alias arm_timer = object.timer[1]
 alias disarm_timer = object.timer[2]
@@ -167,7 +167,7 @@ end
 
 function spartan_attack_success()
 	reset_timers()
-	global.object[0].danger_zone.delete()
+	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_territories_captured, false)
@@ -190,7 +190,7 @@ end
 
 function spartan_defense_success()
 	reset_timers()
-	global.object[0].danger_zone.delete()
+	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_offense, false)
@@ -214,7 +214,7 @@ end
 
 function elite_attack_success()
 	reset_timers()
-	global.object[0].danger_zone.delete()
+	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_territories_lost, false)
@@ -236,7 +236,7 @@ end
 
 function elite_defense_success()
 	reset_timers()
-	global.object[0].danger_zone.delete()
+	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_defense, false)
@@ -311,6 +311,19 @@ function start_sudden_death()
 	end
 	game.sudden_death_timer.set_rate(-100%)
 	sudden_death_active = 1
+end
+
+function del_danger_zones()
+	for each object with label "frontline" do
+		if current_object.danger_zone != no_object then
+			current_object.danger_zone.delete()
+		end
+	end
+	for each object with label "frontline_spawnpoint" do
+		if current_object.danger_zone != no_object then
+			current_object.danger_zone.delete()
+		end
+	end
 end
 
 -- ANVIL EDITOR
@@ -396,30 +409,30 @@ do
 	if sudden_death_active == 1 then 
 		if game.sudden_death_timer.is_zero() then
 			if phase_objective == 1 then
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				elite_defense_success()
 			alt
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				spartan_defense_success()
 			end
 		end
 		if phase_objective == 1 and global.object[0].reds == 0 then
 			if script_option[3] != -1 and global.object[0].capture_timer == script_option[3] then 
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				elite_defense_success()
 			end
 			if script_option[3] == -1 and global.object[0].capture_timer == global.object[0].number[3] then
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				elite_defense_success()
 			end
 		end
 		if phase_objective == 2 and global.object[0].blues == 0 then
 			if script_option[3] != -1 and global.object[0].capture_timer == script_option[3] then 
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				spartan_defense_success()
 			end
 			if script_option[3] == -1 and global.object[0].capture_timer == global.object[0].number[3] then
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				spartan_defense_success()
 			end
 		end
@@ -489,7 +502,6 @@ if phase == -1 then
 		phase_objective = 2 
 	end
 end
-
 
 do 
 	if phase == -1 then -- Determines what to do when the game starts
@@ -573,27 +585,79 @@ for each object with label "frontline" do
 			end
 		end
 	end
-	if phase != current_object.spawn_sequence then
-		current_object.set_waypoint_visibility(no_one) -- Makes sure any territories that are not being fought over don't have waypoints.
-		for each player do
-			if current_object.team == current_player.team and current_object.spawn_sequence != max_territories and current_object.spawn_sequence != 1 then -- If this territory isn't the final one (for either side), this allows the controlling team to spawn on it.
+	current_object.set_waypoint_visibility(no_one) -- Makes sure any territories that are not being fought over don't have waypoints.
+	for each player do
+		if current_object.team == current_player.team then
+			if current_object.spawn_sequence != phase then
 				current_object.set_spawn_location_permissions(mod_player, current_player, 1)
-				temp_object = current_player.primary_respawn -- The following tries to set the default respawn point to the territory closest to the frontline.
-				if current_object.spawn_sequence > temp_object.spawn_sequence and current_player.team == team[0] then
-					current_player.primary_respawn = current_object
-				end
-				if current_object.spawn_sequence < temp_object.spawn_sequence and current_player.team == team[1] then
-					current_player.primary_respawn = current_object
-				end
 			end
-			if current_object.team != current_player.team then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 0)
+			temp_object = current_player.primary_spawn_object -- The following tries to set the default respawn point to the territory closest to the frontline.
+			temp_object2 = global.object[0].danger_zone
+			if current_object.spawn_sequence > temp_object.spawn_sequence and current_player.team == team[0] and temp_object2.blues = 0 then
+				current_player.primary_spawn_object = current_object
 			end
+			if current_object.spawn_sequence < temp_object.spawn_sequence and current_player.team == team[1] and temp_object2.reds = 0 then
+				current_player.primary_spawn_object = current_object
+			end
+		end
+		if current_object.team != current_player.team then
+			current_object.set_spawn_location_permissions(mod_player, current_player, 0)
 		end
 	end
 	for each player do
-		if current_object == current_player.primary_respawn then
+		if current_object == current_player.primary_spawn_object then
 			current_player.set_primary_respawn_object(current_object)
+		end
+	end
+end
+
+-- Allow multiple spawnpoints for one frontline
+for each object with label "frontline_spawnpoint" do
+	if phase == current_object.spawn_sequence then
+		if current_object.danger_zone == no_object then -- Sets up a danger zone that checks if enemies are near the spawnpoint.
+			current_object.danger_zone = current_object.place_at_me(hill_marker, none, never_garbage_collect, 0, 0, 0, default)
+			temp_object = no_object
+			temp_object = current_object.danger_zone
+			temp_object.team = current_object.team
+			temp_object.set_shape(cylinder, 150, 150, 150)
+		end
+		temp_object = no_object
+		temp_object = current_object.danger_zone
+		temp_object.reds = 0
+		temp_object.blues = 0
+		for each player do -- Counts the number of players from each side who are in the danger zone.
+			if temp_object.shape_contains(current_player.biped) then
+				if current_player.team == team[0] then
+					temp_object.reds += 1
+				end
+				if current_player.team == team[1] then
+					temp_object.blues += 1
+				end
+			end
+		end
+		if current_object.team == team[0] and temp_object.blues <= 0 then
+			current_object.set_spawn_location_permissions(allies)
+		end
+		if current_object.team == team[0] and temp_object.blues > 0 then
+			current_object.set_spawn_location_permissions(no_one)
+		end
+		if current_object.team == team[1] and temp_object.reds <= 0 then
+			current_object.set_spawn_location_permissions(allies)
+		end
+		if current_object.team == team[1] and temp_object.reds > 0 then
+			current_object.set_spawn_location_permissions(no_one)
+		end
+	end
+	if script_option[6] == 0 then -- If spawn everywhere is set to "Current frontline and HQ"
+		temp_int = phase
+		temp_int -= 1
+		if current_object.spawn_sequence == temp_int then
+			current_object.set_spawn_location_permissions(allies)
+		end
+		temp_int = phase
+		temp_int += 1
+		if current_object.spawn_sequence == temp_int then
+			current_object.set_spawn_location_permissions(allies)
 		end
 	end
 end
@@ -617,14 +681,14 @@ do
 			if global.object[0].timer[0].is_zero() then -- Initiates a Spartan victory
 				global.object[0].team = team[0]
 				global.object[0].timer[0].reset()
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				spartan_attack_success()
 			end
 		altif global.object[0].blues > global.object[0].reds then -- if there are more elites than spartans
 			global.object[0].timer[0].set_rate(-100%)
 			if global.object[0].timer[0].is_zero() then -- Initiates an Elite victory.
 				global.object[0].team = team[1]
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				elite_attack_success()
 			end
 		altif global.object[0].timer[0] != script_option[3] then -- If no Spartan or Elites are in the territory, it will automatically regenerate up to 20.
@@ -666,7 +730,7 @@ do
 			if global.object[0].timer[0].is_zero() then
 				global.object[0].team = team[0]
 				global.object[0].timer[0].reset()
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				if phase == max_territories then -- If this is the last territory, the game will end with a Spartan victory.
 					spartan_victory()
 					capture_victory()
@@ -707,7 +771,7 @@ do
 			global.object[0].timer[0].set_rate(0%)
 		end
 		if game.round_time_limit > 0 and game.round_timer.is_zero() and global.object[0].reds <= 0 then -- If no Spartans are in the territory when the round timer ends then they will fail the attack.
-			global.object[0].danger_zone.delete()
+			del_danger_zones()
 			global.object[0] = no_object
 			phase -= 1
 			elite_defense_success()
@@ -749,7 +813,7 @@ do
 			if global.object[0].timer[0].is_zero() then -- Initiates an Elite victory
 				global.object[0].team = team[1]
 				global.object[0].timer[0].reset()
-				global.object[0].danger_zone.delete()
+				del_danger_zones()
 				if phase == 1 then -- If this is the last territory, the game will end with an Elite victory.
 					elite_victory()
 					capture_victory()
@@ -785,7 +849,7 @@ do
 			global.object[0].timer[0].set_rate(0%)
 		end
 		if game.round_time_limit > 0 and game.round_timer.is_zero() and global.object[0].blues <= 0 then -- If no elites are in the territory when the round timer ends then they will fail the attack.
-			global.object[0].danger_zone.delete()
+			del_danger_zones()
 			global.object[0] = no_object
 			phase += 1
 			spartan_defense_success()
@@ -810,20 +874,20 @@ end
 
 -- Dynamic kill zones
 function attach_soft_kill()
-    current_player.softkill = current_player.biped.place_at_me(soft_kill_boundary, none, never_garbage_collect, 0, 0, 0, none)
-    current_player.softkill.set_shape(sphere, 2)
-    current_player.softkill.attach_to(current_player.biped, 0, 0, 0, absolute)
-    temp_object = current_player.softkill
+    current_player.softkill_object = current_player.biped.place_at_me(soft_kill_boundary, none, never_garbage_collect, 0, 0, 0, none)
+    current_player.softkill_object.set_shape(sphere, 2)
+    current_player.softkill_object.attach_to(current_player.biped, 0, 0, 0, absolute)
+    temp_object = current_player.softkill_object
 end
 
 for each player do
 	current_player.out_of_bounds = 0
 	for each object with label "killzone" do
         if current_object.shape_contains(current_player.biped) then
-            if current_player.softkill == no_object and current_player.team == team[0] and current_object.spawn_sequence > phase then
+            if current_player.softkill_object == no_object and current_player.team == team[0] and current_object.spawn_sequence > phase then
 				current_player.out_of_bounds += 1
             end
-            if current_player.softkill == no_object and current_player.team == team[1] and current_object.spawn_sequence < phase then
+            if current_player.softkill_object == no_object and current_player.team == team[1] and current_object.spawn_sequence < phase then
                 current_player.out_of_bounds += 1
             end
         end
@@ -836,8 +900,8 @@ for each player do
 			temp_object.team = team[0]
 		end
 	end
-	if current_player.out_of_bounds == 0 and current_player.softkill != no_object then
-		current_player.softkill.delete()
+	if current_player.out_of_bounds == 0 and current_player.softkill_object != no_object then
+		current_player.softkill_object.delete()
 	end
 end
 
@@ -868,38 +932,38 @@ if phase == max_territories or phase == 1 then
 		explosive.delete()
 		send_incident(bomb_reset, team[0], all_players)
 	end
-	if bomb_carrier == no_player then
-		bomb_carrier = explosive.try_get_carrier()
-		if bomb_carrier != no_player then
-			send_incident(bomb_taken, bomb_carrier, bomb_carrier)
+	if bomb_carrier_player == no_player then
+		bomb_carrier_player = explosive.try_get_carrier()
+		if bomb_carrier_player != no_player then
+			send_incident(bomb_taken, bomb_carrier_player, bomb_carrier_player)
 		end
 	end
-	if bomb_carrier != no_player then
-		bomb_carrier = explosive.try_get_carrier()
-		if bomb_carrier == no_player then
+	if bomb_carrier_player != no_player then
+		bomb_carrier_player = explosive.try_get_carrier()
+		if bomb_carrier_player == no_player then
 			send_incident(bomb_dropped, team[0], team[0])
 		end
 	end
 	for each player do
-		if current_player == bomb_carrier then
+		if current_player == bomb_carrier_player then
 			current_player.biped.set_waypoint_icon(defend)
 		end
-		if current_player != bomb_carrier then
+		if current_player != bomb_carrier_player then
 			current_player.biped.set_waypoint_icon(none)
 		end
 	end
 	global.object[0].armed = 0
-	if global.object[0].shape_contains(bomb_carrier.biped) then
+	if global.object[0].shape_contains(bomb_carrier_player.biped) then
 		global.object[0].arm_timer.set_rate(-100%)
 		global.object[0].set_progress_bar(object.arm_timer, everyone)
 	end
-	if not global.object[0].shape_contains(bomb_carrier.biped) and global.object[0].object[1] == no_object then
+	if not global.object[0].shape_contains(bomb_carrier_player.biped) and global.object[0].object[1] == no_object then
 		global.object[0].arm_timer.set_rate(100%)
 	end
 	if global.object[0].arm_timer.is_zero() then
-		send_incident(bomb_armed, bomb_carrier, all_players)
-		send_incident(bomb_planted, bomb_carrier, bomb_carrier)
-		bomb_carrier = no_player
+		send_incident(bomb_armed, bomb_carrier_player, all_players)
+		send_incident(bomb_planted, bomb_carrier_player, bomb_carrier_player)
+		bomb_carrier_player = no_player
 		explosive.detach()
 		explosive.attach_to(global.object[0], 0, 0, 2, absolute)
 		explosive.set_pickup_permissions(no_one)
@@ -941,7 +1005,7 @@ if phase == max_territories or phase == 1 then
 		end
 	end
 	if game.round_time_limit > 0 and game.round_timer.is_zero() then
-		global.object[0].danger_zone.delete()
+		del_danger_zones()
 		explosive.delete()
 		if phase == max_territories then
 			phase -= 1
