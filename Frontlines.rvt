@@ -93,6 +93,7 @@ alias ability_cooldown = player.timer[1]
 alias temp_player = global.player[1]
 alias out_of_bounds = player.number[0]
 
+
 do
 	global.timer[1].set_rate(-100%)
 	if global.timer[1] == 360 and global.number[8] == 0 then
@@ -1057,7 +1058,6 @@ for each player do
 	end
 end
 
-
 --=== LOADOUT SYSTEM ===--
 
 enum class
@@ -1132,6 +1132,19 @@ for each player do
                 temp_object2.class = class.zealot
 				game.show_message_to(current_player, none, "Zealot selected: 1.5x overshield and 1.2x speed")
             end
+			if temp_object.is_of_type(plasma_repeater) then -- Ultra
+				temp_object = current_player.try_get_armor_ability()
+				if temp_object.is_of_type(evade) or temp_object.is_of_type(drop_shield) then
+					save_player_info()
+					temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, ultra)
+					apply_player_info()
+					temp_object = temp_object2.place_between_me_and(temp_object2, drop_shield, 0)
+					current_player.plasma_grenades = 1
+					current_player.frag_grenades = 0
+					temp_object2.class = class.ultra
+					game.show_message_to(current_player, none, "Champion selected: Berserk when shields drop")
+				end
+			end
             temp_object = current_player.try_get_armor_ability()
             if temp_object.is_of_type(active_camo_aa) then -- Spec ops
                 save_player_info()
@@ -1142,16 +1155,6 @@ for each player do
                 current_player.frag_grenades = 0
                 temp_object2.class = class.spec_ops
 				game.show_message_to(current_player, none, "Spec Ops selected: Permenant active camo, not visible while moving, no shields")
-            end
-            if temp_object.is_of_type(drop_shield) then -- Ultra
-                save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, ultra)
-                apply_player_info()
-                temp_object = temp_object2.place_between_me_and(temp_object2, drop_shield, 0)
-                current_player.plasma_grenades = 1
-                current_player.frag_grenades = 0
-                temp_object2.class = class.ultra
-				game.show_message_to(current_player, none, "Champion selected: Berserk when shields drop")
             end
             if temp_object.is_of_type(jetpack) then -- Ranger
                 save_player_info()
@@ -1164,38 +1167,36 @@ for each player do
             end
         end
     end
-    if not current_player.is_elite() then
-        if current_player.biped != no_object then
-            temp_object2 = current_player.biped
-            if temp_object2.class == class.none then
-                temp_object = current_player.try_get_weapon(primary)
-                if temp_object.is_of_type(magnum) then
-                    temp_object = current_player.try_get_armor_ability()
-                    if temp_object.is_of_type(sprint) then
-                        temp_object2.class = class.grenadier
-						game.show_message_to(current_player, none, "Grenadier selected: Grenades regenerate")
-                    alt
-                        temp_object2.class = class.corpsman
-						game.show_message_to(current_player, none, "Corpsman selected: Passivley fortify allies giving them extra damage resistance")
-                    end
-                end
-                if temp_object.is_of_type(dmr) then
-                    temp_object2.class = class.marksman
-					game.show_message_to(current_player, none, "Marksman selected: 2x radar range")
-                end
-                if temp_object.is_of_type(detached_machine_gun_turret) then
-                    temp_object2.class = class.juggernaut
-                end
-                temp_object = current_player.try_get_armor_ability()
-                if temp_object.is_of_type(sprint) then
-                    temp_object2.class = class.guard
-                end
-                if temp_object.is_of_type(hologram) then
-                    temp_object2.class = class.operator
-					game.show_message_to(current_player, none, "Operator selected: Enemies always appear on radar")
-                end
-            end
-        end
+    if current_player.is_spartan() and current_player.biped != no_object then
+		temp_object2 = current_player.biped
+		if temp_object2.class == class.none then
+			temp_object = current_player.try_get_weapon(primary)
+			if temp_object.is_of_type(magnum) then
+				temp_object = current_player.try_get_armor_ability()
+				if temp_object.is_of_type(sprint) then
+					temp_object2.class = class.grenadier
+					game.show_message_to(current_player, none, "Grenadier selected: Grenades regenerate")
+				alt
+					temp_object2.class = class.corpsman
+					game.show_message_to(current_player, none, "Corpsman selected: Passivley fortify allies giving them extra damage resistance")
+				end
+			end
+			if temp_object.is_of_type(dmr) then
+				temp_object2.class = class.marksman
+				game.show_message_to(current_player, none, "Marksman selected: 2x radar range")
+			end
+			if temp_object.is_of_type(detached_machine_gun_turret) then
+				temp_object2.class = class.juggernaut
+			end
+			temp_object = current_player.try_get_armor_ability()
+			if temp_object.is_of_type(sprint) then
+				temp_object2.class = class.guard
+			end
+			if temp_object.is_of_type(hologram) then
+				temp_object2.class = class.operator
+				game.show_message_to(current_player, none, "Operator selected: Enemies always appear on radar")
+			end
+		end
     end     
 end
 
