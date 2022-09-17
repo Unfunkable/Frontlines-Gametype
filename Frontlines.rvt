@@ -1050,11 +1050,15 @@ do
 	end
 end
 
--- Vehicle damage boost
+-- Damage boost
 for each player do
 	temp_object = current_player.try_get_vehicle()
 	if temp_object.has_forge_label("damage_boost") then
-		current_player.apply_traits(script_traits[12])
+		current_player.apply_traits(script_traits[15])
+	end
+	temp_object = current_player.try_get_weapon()
+	if temp_object.has_forge_label("damage_boost") then
+		current_player.apply_traits(script_traits[15])
 	end
 end
 
