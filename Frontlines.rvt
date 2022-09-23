@@ -77,6 +77,7 @@ alias max_territories = global.number[4]
 alias declared_sudden_death = global.number[5]
 alias sudden_death_active = global.number[6]
 alias temp_int = global.number[1]
+alias temp_int2 = global.number[9]
 alias primary_spawn_object = player.object[1]
 alias temp_object = global.object[1]
 alias temp_object2 = global.object[4]
@@ -162,6 +163,14 @@ function add_elite_lives()
 				team[1].score += current_object.spawn_sequence
 				team[1].score += 1
 			end
+		end
+	end
+end
+
+function del_danger_zones()
+	for each object do
+		if current_object.has_forge_label("frontline") or current_object.has_forge_label("frontline_spawnpoint") then
+			current_object.danger_zone.delete()
 		end
 	end
 end
@@ -314,15 +323,60 @@ function start_sudden_death()
 	sudden_death_active = 1
 end
 
-function del_danger_zones()
-	for each object with label "frontline" do
-		if current_object.danger_zone != no_object then
-			current_object.danger_zone.delete()
+function negative_scaling_timers()
+	if script_option[5] == 0 and temp_int > 0 then
+		global.object[0].timer[0].set_rate(-100%)
+	end
+	if script_option[5] == 1 then
+		if temp_int == 1 then
+			global.object[0].timer[0].set_rate(-50%)
+		end
+		if temp_int == 2 then
+			global.object[0].timer[0].set_rate(-75%)
+		end
+		if temp_int == 3 then
+			global.object[0].timer[0].set_rate(-100%)
+		end
+		if temp_int == 4 then
+			global.object[0].timer[0].set_rate(-125%)
+		end
+		if temp_int == 5 then
+			global.object[0].timer[0].set_rate(-150%)
+		end
+		if temp_int == 6 then
+			global.object[0].timer[0].set_rate(-175%)
+		end
+		if temp_int >= 7 then
+			global.object[0].timer[0].set_rate(-200%)
 		end
 	end
-	for each object with label "frontline_spawnpoint" do
-		if current_object.danger_zone != no_object then
-			current_object.danger_zone.delete()
+end
+
+function positive_scaling_timers()
+	if script_option[5] == 0 and temp_int > 0 then
+		global.object[0].timer[0].set_rate(100%)
+	end
+	if script_option[5] == 1 then
+		if temp_int == 1 then
+			global.object[0].timer[0].set_rate(50%)
+		end
+		if temp_int == 2 then
+			global.object[0].timer[0].set_rate(75%)
+		end
+		if temp_int == 3 then
+			global.object[0].timer[0].set_rate(100%)
+		end
+		if temp_int == 4 then
+			global.object[0].timer[0].set_rate(125%)
+		end
+		if temp_int == 5 then
+			global.object[0].timer[0].set_rate(150%)
+		end
+		if temp_int == 6 then
+			global.object[0].timer[0].set_rate(175%)
+		end
+		if temp_int >= 7 then
+			global.object[0].timer[0].set_rate(200%)
 		end
 	end
 end
@@ -366,6 +420,38 @@ function anvil_trigger_0()
 	   current_object.number[3] = 1
 	end
  end
+
+ function anvil_trigger2()
+   if current_object.spawn_sequence == -3 then 
+      if current_object.team == team[1] then 
+         set_scenario_interpolator_state(1, 1)
+      end
+      if current_object.team == team[3] then 
+         set_scenario_interpolator_state(2, 1)
+      end
+      if current_object.team == team[5] then 
+         set_scenario_interpolator_state(3, 1)
+      end
+      if current_object.team == team[7] then 
+         set_scenario_interpolator_state(4, 1)
+      end
+   end
+   if current_object.spawn_sequence == -4 then 
+      current_object.set_waypoint_visibility(everyone)
+      if current_object.team == team[1] then 
+         set_scenario_interpolator_state(5, 1)
+      end
+      if current_object.team == team[3] then 
+         set_scenario_interpolator_state(6, 1)
+      end
+      if current_object.team == team[5] then 
+         set_scenario_interpolator_state(7, 1)
+      end
+      if current_object.team == team[7] then 
+         set_scenario_interpolator_state(8, 1)
+      end
+   end
+end
 
 -- Init stuff
 do 
@@ -533,74 +619,37 @@ do
 end
 
 for each object with label "frontline" do
-	if phase == current_object.spawn_sequence then -- Figures out what territory is being fought over, and displays a marker over it.
-		global.object[0] = current_object
-		global.object[0].set_waypoint_visibility(everyone)
-		global.object[0].set_waypoint_icon(inward)
-		current_object.set_waypoint_timer(object.capture_timer)
-		global.object[0].reds = 0
-		global.object[0].blues = 0
-		if global.object[0].danger_zone == no_object then -- Sets up a danger zone that checks if enemies are near the frontline.
-			global.object[0].danger_zone = global.object[0].place_at_me(hill_marker, none, never_garbage_collect, 0, 0, 0, default)
-			temp_object = no_object
-			temp_object = global.object[0].danger_zone
-			temp_object.team = global.object[0].team
-			temp_object.set_shape(cylinder, 150, 150, 150)
+	if phase != current_object.spawn_sequence then
+		current_object.set_waypoint_visibility(no_one)
+		if script_option[7] == 0 then
+			temp_int = phase
+			temp_int -= 1
+			temp_int2 = phase
+			temp_int2 += 1
+			if current_object.spawn_sequence == temp_int or current_object.spawn_sequence == temp_int2 then
+				for each player do
+					if current_player.team == current_object.team then
+						current_object.set_spawn_location_permissions(mod_player, current_player, 1)
+					end
+				end
+			end
+			if current_object.spawn_sequence != temp_int and current_object.spawn_sequence != temp_int2 then
+				current_object.set_spawn_location_permissions(no_one)
+			end
 		end
-		temp_object = no_object
-		temp_object = global.object[0].danger_zone
-		temp_object.reds = 0
-		temp_object.blues = 0
-		for each player do -- Counts the number of players from each side who are in the territory.
-			if global.object[0].shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					global.object[0].reds += 1
-				end
-				if current_player.team == team[1] then 
-					global.object[0].blues += 1
-				end
-			end
-			if temp_object.shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					temp_object.reds += 1
-				end
-				if current_player.team == team[1] then
-					temp_object.blues += 1
-				end
-			end
-			--Determines if any enemies are near the frontline, and changes spawning permissions accordingly.
-			if current_player.team != global.object[0].team then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 0)
-			end
-			if current_player.team == team[0] and global.object[0].team == team[0] and temp_object.blues < 1 then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 1)
-			end
-			if current_player.team == team[0] and global.object[0].team == team[0] and temp_object.blues > 0 then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 0)
-			end
-			if current_player.team == team[1] and global.object[0].team == team[1] and temp_object.reds < 1 then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 1)
-			end
-			if current_player.team == team[1] and global.object[0].team == team[1] and temp_object.reds > 0 then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 0)
-			end
+		if script_option[7] == 1 then
+			current_object.set_spawn_location_permissions(allies)
 		end
 	end
-	current_object.set_waypoint_visibility(no_one) -- Makes sure any territories that are not being fought over don't have waypoints.
 	for each player do
-		if current_object.team == current_player.team then
-			if current_object.spawn_sequence != phase then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 1)
-			end
-			temp_object = current_player.primary_spawn_object -- The following tries to set the default respawn point to the territory closest to the frontline.
-			temp_object2 = global.object[0].danger_zone
-			if current_object.spawn_sequence > temp_object.spawn_sequence and current_player.team == team[0] and temp_object2.blues = 0 then
+		temp_object = current_player.primary_spawn_object -- The following tries to set the default respawn point to the territory closest to the frontline.
+		temp_object2 = current_object.danger_zone
+			if current_object.spawn_sequence > temp_object.spawn_sequence and current_player.team == team[0] and temp_object2.blues == 0 then
 				current_player.primary_spawn_object = current_object
 			end
-			if current_object.spawn_sequence < temp_object.spawn_sequence and current_player.team == team[1] and temp_object2.reds = 0 then
+			if current_object.spawn_sequence < temp_object.spawn_sequence and current_player.team == team[1] and temp_object2.reds == 0 then
 				current_player.primary_spawn_object = current_object
 			end
-		end
 		if current_object.team != current_player.team then
 			current_object.set_spawn_location_permissions(mod_player, current_player, 0)
 		end
@@ -614,6 +663,12 @@ end
 
 -- Allow multiple spawnpoints for one frontline
 for each object with label "frontline_spawnpoint" do
+	temp_object = current_object
+	for each object with label "frontline" do
+		if temp_object.spawn_sequence == current_object.spawn_sequence then
+			temp_object.team = current_object.team
+		end
+	end
 	if phase == current_object.spawn_sequence then
 		if current_object.danger_zone == no_object then -- Sets up a danger zone that checks if enemies are near the spawnpoint.
 			current_object.danger_zone = current_object.place_at_me(hill_marker, none, never_garbage_collect, 0, 0, 0, default)
@@ -632,10 +687,10 @@ for each object with label "frontline_spawnpoint" do
 					temp_object.reds += 1
 				end
 				if current_player.team == team[1] then
-					temp_object.blues += 1
-				end
+					temp_object.blues += 1 
+				end 
 			end
-		end
+		end -- If the danger zone is clear of enemies they can spawn at the frontline spawnpoints, otherwise they can't
 		if current_object.team == team[0] and temp_object.blues <= 0 then
 			current_object.set_spawn_location_permissions(allies)
 		end
@@ -649,15 +704,20 @@ for each object with label "frontline_spawnpoint" do
 			current_object.set_spawn_location_permissions(no_one)
 		end
 	end
-	if script_option[6] == 0 then -- If spawn everywhere is set to "Current frontline and HQ"
+	if script_option[7] == 0 then -- If "Spawn Locations" is set to "Current frontline and HQ"
 		temp_int = phase
 		temp_int -= 1
-		if current_object.spawn_sequence == temp_int then
+		temp_int2 = phase
+		temp_int2 += 1
+		if current_object.spawn_sequence == temp_int or current_object.spawn_sequence == temp_int2 then
 			current_object.set_spawn_location_permissions(allies)
 		end
-		temp_int = phase
-		temp_int += 1
-		if current_object.spawn_sequence == temp_int then
+		if current_object.spawn_sequence != temp_int and current_object.spawn_sequence != temp_int2 then
+			current_object.set_spawn_location_permissions(no_one)
+		end
+	end
+	if script_option[7] == 1 then -- If "Spawn Locations" is set to "Everywhere"
+		if current_object.spawn_sequence != phase then
 			current_object.set_spawn_location_permissions(allies)
 		end
 	end
@@ -702,32 +762,7 @@ do
 		if global.object[0].reds > global.object[0].blues then --If there are more spartans than Elites, the capture timer will go down.
 			temp_int = global.object[0].reds
 			temp_int -= global.object[0].blues
-			if script_option[5] == 0 and temp_int > 0 then
-				global.object[0].timer[0].set_rate(-100%)
-			end
-			if script_option[5] == 1 then	
-				if temp_int == 1 then
-					global.object[0].timer[0].set_rate(-50%)
-				end
-				if temp_int == 2 then
-					global.object[0].timer[0].set_rate(-75%)
-				end
-				if temp_int == 3 then
-					global.object[0].timer[0].set_rate(-100%)
-				end
-				if temp_int == 4 then
-					global.object[0].timer[0].set_rate(-125%)
-				end
-				if temp_int == 5 then
-					global.object[0].timer[0].set_rate(-150%)
-				end
-				if temp_int == 6 then
-					global.object[0].timer[0].set_rate(-175%)
-				end
-				if temp_int == 7 or temp_int == 8 then
-					global.object[0].timer[0].set_rate(-200%)
-				end
-			end
+			negative_scaling_timers()
 			if global.object[0].timer[0].is_zero() then
 				global.object[0].team = team[0]
 				global.object[0].timer[0].reset()
@@ -742,32 +777,7 @@ do
 		altif global.object[0].blues > global.object[0].reds and global.object[0].timer[0] != script_option[3] then -- If there are more Elites than Spartans in the territory, the timer will regenerate up to the set amount.
 			temp_int = global.object[0].blues
 			temp_int -= global.object[0].reds
-			if script_option[5] == 0 and temp_int > 0 then
-				global.object[0].timer[0].set_rate(-100%)
-			end
-			if script_option[5] == 1 then
-				if temp_int == 1 then
-					global.object[0].timer[0].set_rate(50%)
-				end
-				if temp_int == 2 then
-					global.object[0].timer[0].set_rate(75%)
-				end
-				if temp_int == 3 then
-					global.object[0].timer[0].set_rate(100%)
-				end
-				if temp_int == 4 then
-					global.object[0].timer[0].set_rate(125%)
-				end
-				if temp_int == 5 then
-					global.object[0].timer[0].set_rate(150%)
-				end
-				if temp_int == 6 then
-					global.object[0].timer[0].set_rate(175%)
-				end
-				if temp_int == 7 or temp_int == 8 then
-					global.object[0].timer[0].set_rate(200%)
-				end
-			end
+			positive_scaling_timers()
 		alt 
 			global.object[0].timer[0].set_rate(0%)
 		end
@@ -790,27 +800,7 @@ do
 		if global.object[0].blues > global.object[0].reds then --If there are more elites than spartans
 			temp_int = global.object[0].blues
 			temp_int -= global.object[0].reds
-			if temp_int == 1 then
-				global.object[0].timer[0].set_rate(-50%)
-			end
-			if temp_int == 2 then
-				global.object[0].timer[0].set_rate(-75%)
-			end
-			if temp_int == 3 then
-				global.object[0].timer[0].set_rate(-100%)
-			end
-			if temp_int == 4 then
-				global.object[0].timer[0].set_rate(-125%)
-			end
-			if temp_int == 5 then
-				global.object[0].timer[0].set_rate(-150%)
-			end
-			if temp_int == 6 then
-				global.object[0].timer[0].set_rate(-175%)
-			end
-			if temp_int == 7 or temp_int == 8 then
-				global.object[0].timer[0].set_rate(-200%)
-			end
+			negative_scaling_timers()
 			if global.object[0].timer[0].is_zero() then -- Initiates an Elite victory
 				global.object[0].team = team[1]
 				global.object[0].timer[0].reset()
@@ -825,27 +815,7 @@ do
 		altif global.object[0].reds > global.object[0].blues and global.object[0].timer[0] != script_option[3] then --If there are more Spartans than Elites in the territory, the timer will regenerate up to 20.
 			temp_int = global.object[0].reds
 			temp_int -= global.object[0].blues
-			if temp_int == 1 then
-				global.object[0].timer[0].set_rate(50%)
-			end
-			if temp_int == 2 then
-				global.object[0].timer[0].set_rate(75%)
-			end
-			if temp_int == 3 then
-				global.object[0].timer[0].set_rate(100%)
-			end
-			if temp_int == 4 then
-				global.object[0].timer[0].set_rate(125%)
-			end
-			if temp_int == 5 then
-				global.object[0].timer[0].set_rate(150%)
-			end
-			if temp_int == 6 then
-				global.object[0].timer[0].set_rate(175%)
-			end
-			if temp_int == 7 or temp_int == 8 then
-				global.object[0].timer[0].set_rate(200%)
-			end
+			positive_scaling_timers()
 		alt 
 			global.object[0].timer[0].set_rate(0%)
 		end
@@ -1053,11 +1023,8 @@ end
 -- Damage boost
 for each player do
 	temp_object = current_player.try_get_vehicle()
-	if temp_object.has_forge_label("damage_boost") then
-		current_player.apply_traits(script_traits[15])
-	end
-	temp_object = current_player.try_get_weapon()
-	if temp_object.has_forge_label("damage_boost") then
+	temp_object2 = current_player.try_get_weapon(primary)
+	if temp_object.has_forge_label("damage_boost") or temp_object2.has_forge_label("damage_boost") then
 		current_player.apply_traits(script_traits[15])
 	end
 end
@@ -1100,6 +1067,7 @@ end
 
 -- Class detection
 for each player do
+	current_player.player[0] = no_player
     if current_player.is_elite() and current_player.biped != no_object then
         temp_object = current_player.biped
         if temp_object.class == class.none then
@@ -1175,6 +1143,10 @@ for each player do
 		temp_object2 = current_player.biped
 		if temp_object2.class == class.none then
 			temp_object = current_player.try_get_weapon(primary)
+			if temp_object.is_of_type(grenade_launcher) then
+				temp_object2.class = class.grenadier
+				game.show_message_to(current_player, none, "Grenadier selected: Grenades regenerate")
+			end
 			if temp_object.is_of_type(magnum) then
 				temp_object = current_player.try_get_armor_ability()
 				if temp_object.is_of_type(sprint) then
@@ -1201,12 +1173,8 @@ for each player do
 				game.show_message_to(current_player, none, "Operator selected: Enemies always appear on radar")
 			end
 		end
-    end     
-end
-
--- Class abilities
-for each player do 
-    temp_object = current_player.biped
+    end
+	temp_object = current_player.biped
     if temp_object.class == class.minor then
         current_player.apply_traits(script_traits[0])
     end
@@ -1314,9 +1282,7 @@ for each player do
 				if current_player != temp_player then
 					temp_int += 1
 				end
-			alt
-				script_widget[2].set_visibility(current_player, false)
-            end
+			end
         end
 		if temp_int > 0 then
 			script_widget[3].set_visibility(temp_player, true)
@@ -1325,7 +1291,7 @@ for each player do
     end
     if temp_object.class == class.grenadier then
         current_player.apply_traits(script_traits[14])
-    end
+    end  
 end
 
 -- Anti-tryhard
@@ -1353,13 +1319,13 @@ if script_option[6] == 1 then
 				end
 			end
 		end
-	end
-	for each player do
 		temp_object = current_player.biped
 		temp_object2 = current_player.try_get_weapon(primary)
-		if temp_object.class = class.marksman and not temp_object2.is_of_type(dmr) then
-			current_player.biped.remove_weapon(primary, false)
-			game.show_message_to(current_player, none, "Weapon prohibited")
+		if temp_object.class == class.marksman and temp_object2 != no_object then
+			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) then
+				current_player.biped.remove_weapon(primary, false)
+				game.show_message_to(current_player, none, "Weapon prohibited")
+			end
 		end
 	end
 end
@@ -1379,6 +1345,9 @@ for each player do
         script_widget[1].set_visibility(current_player, true)
         script_widget[1].set_text("BERSERK %n", hud_player.ability_timer)
     end
+	if current_player.player[0] == no_player then
+		script_widget[2].set_visibility(current_player, false)
+	end
 end
 
 --=== ANVIL EDITOR STUFF BELOW ===--
@@ -1514,35 +1483,7 @@ for each object with label "attach_base" do
        if current_object.spawn_sequence == 18 then 
           current_object.object[0] = current_object.place_at_me(longsword, none, never_garbage_collect, 0, 0, 0, none)
        end
-       if current_object.spawn_sequence == -3 then 
-          if current_object.team == team[1] then 
-             set_scenario_interpolator_state(1, 1)
-          end
-          if current_object.team == team[3] then 
-             set_scenario_interpolator_state(2, 1)
-          end
-          if current_object.team == team[5] then 
-             set_scenario_interpolator_state(3, 1)
-          end
-          if current_object.team == team[7] then 
-             set_scenario_interpolator_state(4, 1)
-          end
-       end
-       if current_object.spawn_sequence == -4 then 
-          current_object.set_waypoint_visibility(everyone)
-          if current_object.team == team[1] then 
-             set_scenario_interpolator_state(5, 1)
-          end
-          if current_object.team == team[3] then 
-             set_scenario_interpolator_state(6, 1)
-          end
-          if current_object.team == team[5] then 
-             set_scenario_interpolator_state(7, 1)
-          end
-          if current_object.team == team[7] then 
-             set_scenario_interpolator_state(8, 1)
-          end
-       end
+       anvil_trigger2()
        current_object.object[0].copy_rotation_from(current_object, true)
        if current_object.team == team[0] and current_object.spawn_sequence != -5 then 
           current_object.object[0].attach_to(current_object, 0, 0, 0, relative)
@@ -1682,34 +1623,6 @@ for each object with label "attach_base" do
        end
     end
     for each object with label "spawner" do
-       if current_object.spawn_sequence == -3 then 
-          if current_object.team == team[1] then 
-             set_scenario_interpolator_state(1, 1)
-          end
-          if current_object.team == team[3] then 
-             set_scenario_interpolator_state(2, 1)
-          end
-          if current_object.team == team[5] then 
-             set_scenario_interpolator_state(3, 1)
-          end
-          if current_object.team == team[7] then 
-             set_scenario_interpolator_state(4, 1)
-          end
-       end
-       if current_object.spawn_sequence == -4 then 
-          current_object.set_waypoint_visibility(everyone)
-          if current_object.team == team[1] then 
-             set_scenario_interpolator_state(5, 1)
-          end
-          if current_object.team == team[3] then 
-             set_scenario_interpolator_state(6, 1)
-          end
-          if current_object.team == team[5] then 
-             set_scenario_interpolator_state(7, 1)
-          end
-          if current_object.team == team[7] then 
-             set_scenario_interpolator_state(8, 1)
-          end
-       end
+		anvil_trigger2()
     end
  end

@@ -4,6 +4,11 @@ FEATURES
 - Dynamic kill boundaries which prevent spawn killing
 - Assault final phase, which has players destroy the final objective instead of capturing it
 - Changed default loadouts to pair better with new special abilities
+- Ability to set multiple spawn points per frontline
+- "Anti-tryhard" option, to limit proliferation of precision weapons
 
 BUG FIXES
 - The primary respawn should now consistently be the closest to the frontline
+- Elites will no longer capture for Spartans if "Capture Time Scaling" is disabled
+- Elites will actually have "Capture Time Scaling" disabled if the option is set to disabled (oops)
+- 
