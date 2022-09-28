@@ -133,7 +133,12 @@ end
 for each player do
 	if current_player.heard_vo == 0 then
 		send_incident(invasion_game_start, current_player, current_player)
-		send_incident(terr_game_start, current_player, current_player)
+		if current_player.team == team[0] then
+			send_incident(swat_game_start, current_player, current_player)
+		end
+		if current_player.team == team[1] then
+			send_incident(terr_game_start, current_player, current_player)
+		end
 		current_player.heard_vo = 1
 	end
 end
@@ -629,59 +634,6 @@ do
 end
 
 for each object with label "frontline" do
-	if phase == current_object.spawn_sequence then -- Figures out what territory is being fought over, and displays a marker over it.
-		global.object[0] = current_object
-		global.object[0].set_waypoint_visibility(everyone)
-		global.object[0].set_waypoint_icon(inward)
-		current_object.set_waypoint_timer(object.capture_timer)
-		global.object[0].reds = 0
-		global.object[0].blues = 0
-		if global.object[0].danger_zone == no_object then -- Sets up a danger zone that checks if enemies are near the frontline.
-			global.object[0].danger_zone = global.object[0].place_at_me(hill_marker, none, never_garbage_collect, 0, 0, 0, default)
-			temp_object = no_object
-			temp_object = global.object[0].danger_zone
-			temp_object.team = global.object[0].team
-			temp_object.set_shape(cylinder, 150, 150, 150)
-		end
-		temp_object = no_object
-		temp_object = global.object[0].danger_zone
-		temp_object.reds = 0
-		temp_object.blues = 0
-		for each player do -- Counts the number of players from each side who are in the territory.
-			if global.object[0].shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					global.object[0].reds += 1
-				end
-				if current_player.team == team[1] then 
-					global.object[0].blues += 1
-				end
-			end
-			if temp_object.shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					temp_object.reds += 1
-				end
-				if current_player.team == team[1] then
-					temp_object.blues += 1
-				end
-			end
-			--Determines if any enemies are near the frontline, and changes spawning permissions accordingly.
-			if current_player.team != global.object[0].team then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 0)
-			end
-			if current_player.team == team[0] and global.object[0].team == team[0] and temp_object.blues < 1 then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 1)
-			end
-			if current_player.team == team[0] and global.object[0].team == team[0] and temp_object.blues > 0 then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 0)
-			end
-			if current_player.team == team[1] and global.object[0].team == team[1] and temp_object.reds < 1 then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 1)
-			end
-			if current_player.team == team[1] and global.object[0].team == team[1] and temp_object.reds > 0 then
-				current_object.set_spawn_location_permissions(mod_player, current_player, 0)
-			end
-		end
-	end
 	if phase != current_object.spawn_sequence then
 		current_object.set_waypoint_visibility(no_one)
 		if script_option[7] == 0 then
@@ -1108,6 +1060,8 @@ enum class
     grenadier -- Tier 3. Can hold 4 frags and they regenerate over time. Replaces guard
     marksman -- Tier 3. Increased radar range
     juggernaut -- Tier 3. Can deploy machine gun anywhere.
+	swat
+	swat_armored
 end
 
 function save_player_info()
@@ -1204,7 +1158,12 @@ for each player do
     end
     if current_player.is_spartan() and current_player.biped != no_object then
 		temp_object2 = current_player.biped
-		if temp_object2.class == class.none then
+		if temp_object2.class == class.none and global.timer[1] > 360 then
+			temp_object2.class = class.swat
+		altif temp_object2.class == class.none and global.timer[1] > 0 then
+			temp_object2.class = class.swat_armored
+		end
+		if temp_object2.class == class.none and global.timer[1] == 0 then
 			temp_object = current_player.try_get_weapon(primary)
 			if temp_object.is_of_type(grenade_launcher) then
 				temp_object2.class = class.grenadier
@@ -1354,7 +1313,17 @@ for each player do
     end
     if temp_object.class == class.grenadier then
         current_player.apply_traits(script_traits[12])
-    end  
+    end
+	if temp_object.class == class.swat then
+		current_player.apply_traits(script_traits[14])
+	end
+	if temp_object.class == class.swat_armored then
+		current_player.apply_traits(script_traits[15])
+		temp_int = current_player.biped.shields
+		if temp_int <= 0 then
+			temp_object.class = class.swat
+		end
+	end
 end
 
 -- Anti-tryhard

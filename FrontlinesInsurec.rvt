@@ -8,6 +8,7 @@ declare global.object[0] with network priority low
 declare global.object[1] with network priority low
 declare global.object[3] with network priority low
 declare global.object[4] with network priority low
+declare global.object[5] with network priority low
 declare global.number[5] with network priority local
 declare global.number[6] with network priority low
 declare global.number[7] with network priority local
@@ -101,11 +102,7 @@ do
 	global.timer[1].set_rate(-100%)
 	if global.timer[1] == 360 and global.number[8] == 0 then
 		for each player do 
-			if current_player.is_elite() then 
-				current_player.set_loadout_palette(elite_tier_2)
-			alt
-				current_player.set_loadout_palette(spartan_tier_2)
-			end
+			current_player.set_loadout_palette(spartan_tier_2)
 		end
 		game.show_message_to(all_players, none, "Tier 2 loadouts available")
 		global.number[8] = 1
@@ -115,12 +112,7 @@ do
 	end
 	if global.timer[1] == 0 and global.number[8] == 0 then
 		for each player do
-			if current_player.team == team[0] then
-				current_player.set_loadout_palette(spartan_tier_3)
-			end
-			if current_player.team == team[1] then
-				current_player.set_loadout_palette(elite_tier_3)
-			end
+			current_player.set_loadout_palette(spartan_tier_3)
 		end
 	game.show_message_to(all_players, none, "Tier 3 loadouts available")
 	global.number[8] = 1
@@ -280,7 +272,6 @@ end
 
 function spartan_victory()
 	temp_team = team[0]
-	send_incident(inv_spartan_win, all_players, all_players)
 	game.play_sound_for(all_players, inv_cue_spartan_win_big, true)
 	phase_objective = -1
 	game.round_timer.set_rate(0%)
@@ -290,7 +281,6 @@ end
 
 function elite_victory()
 	temp_team = team[1]
-	send_incident(inv_elite_win, all_players, all_players)
 	game.play_sound_for(all_players, inv_cue_covenant_win_big, true)
 	phase_objective = -1
 	game.round_timer.set_rate(0%)
@@ -485,11 +475,11 @@ do
 			end
 			for each player do
 				if current_player.team == team[0] then 
-					current_player.set_round_card_text("Spartan")
+					current_player.set_round_card_text("UNSC")
 					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
 				if current_player.team == team[1] then 
-					current_player.set_round_card_text("Elite")
+					current_player.set_round_card_text("Insurrectionists")
 					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
 			end
@@ -539,28 +529,12 @@ end
 -- Assign loadouts depending on which team the player is on, and display the appropriate round title card.
 for each player do
 	if global.timer[1] > 360 then
-		if current_player.team == team[0] then
-			current_player.set_loadout_palette(spartan_tier_1)
-			current_player.set_round_card_icon(noble)
-		end
-		if current_player.team == team[1] then
-			current_player.set_loadout_palette(elite_tier_1)
-			current_player.set_round_card_icon(covenant)
-		end
+		current_player.set_loadout_palette(spartan_tier_1)
+		current_player.set_round_card_icon(invasion)
 	altif global.timer[1] > 0 then 
-		if current_player.team == team[0] then
-			current_player.set_loadout_palette(spartan_tier_2)
-		end
-		if current_player.team == team[1] then
-			current_player.set_loadout_palette(elite_tier_2)
-		end
+		current_player.set_loadout_palette(spartan_tier_2)
 	alt
-		if current_player.team == team[0] then
-			current_player.set_loadout_palette(spartan_tier_3)
-		end
-		if current_player.team == team[1] then
-			current_player.set_loadout_palette(elite_tier_3)
-		end
+		current_player.set_loadout_palette(spartan_tier_3)
 	end
 
 end

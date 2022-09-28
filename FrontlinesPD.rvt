@@ -133,7 +133,12 @@ end
 for each player do
 	if current_player.heard_vo == 0 then
 		send_incident(invasion_game_start, current_player, current_player)
-		send_incident(terr_game_start, current_player, current_player)
+		if current_player.team == team[0] then
+			send_incident(swat_game_start, current_player, current_player)
+		end
+		if current_player.team == team[1] then
+			send_incident(terr_game_start, current_player, current_player)
+		end
 		current_player.heard_vo = 1
 	end
 end
@@ -1108,6 +1113,8 @@ enum class
     grenadier -- Tier 3. Can hold 4 frags and they regenerate over time. Replaces guard
     marksman -- Tier 3. Increased radar range
     juggernaut -- Tier 3. Can deploy machine gun anywhere.
+	swat
+	swat_armored
 end
 
 function save_player_info()
@@ -1204,7 +1211,12 @@ for each player do
     end
     if current_player.is_spartan() and current_player.biped != no_object then
 		temp_object2 = current_player.biped
-		if temp_object2.class == class.none then
+		if temp_object2.class == class.none and global.timer[1] > 360 then
+			temp_object2.class = class.swat
+		altif temp_object2.class == class.none and global.timer[1] > 0 then
+			temp_object2.class = class.swat_armored
+		end
+		if temp_object2.class == class.none and global.timer[1] == 0 then
 			temp_object = current_player.try_get_weapon(primary)
 			if temp_object.is_of_type(grenade_launcher) then
 				temp_object2.class = class.grenadier
@@ -1354,7 +1366,17 @@ for each player do
     end
     if temp_object.class == class.grenadier then
         current_player.apply_traits(script_traits[12])
-    end  
+    end
+	if temp_object.class == class.swat then
+		current_player.apply_traits(script_traits[14])
+	end
+	if temp_object.class == class.swat_armored then
+		current_player.apply_traits(script_traits[15])
+		temp_int = current_player.biped.shields
+		if temp_int <= 0 then
+			temp_object.class = class.swat
+		end
+	end
 end
 
 -- Anti-tryhard

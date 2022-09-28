@@ -5,9 +5,10 @@ declare global.number[2] with network priority low
 declare global.number[3] with network priority low
 declare global.number[4] with network priority low
 declare global.object[0] with network priority low
-declare global.object[1] with network priority low
+declare global.object[1] with network priority local
 declare global.object[3] with network priority low
 declare global.object[4] with network priority low
+declare global.object[5] with network priority low
 declare global.number[5] with network priority local
 declare global.number[6] with network priority low
 declare global.number[7] with network priority local
@@ -29,9 +30,6 @@ declare player.object[1] with network priority local
 declare player.object[2] with network priority local
 declare player.timer[0]
 declare player.timer[1]
-declare player.player[0] with network priority local
-declare player.number[0] with network priority low
-declare player.number[1] with network priority local
 
 --== ANVIL EDITOR VARIABLES ==--
 declare global.number[9] with network priority low
@@ -71,41 +69,34 @@ alias phase = global.number[2]
 alias phase_objective = global.number[3] -- 0 = both teams attacking, 1 = spartan team attacking, 2 = elite team attacking.
 alias reds = object.number[0]
 alias blues = object.number[1]
-alias softkill_object = player.object[2]
+alias softkill = player.object[2]
 alias capture_timer = object.timer[0]
 alias music_timer = global.timer[0]
 alias max_territories = global.number[4]
 alias declared_sudden_death = global.number[5]
 alias sudden_death_active = global.number[6]
 alias temp_int = global.number[1]
-alias temp_int2 = global.number[9]
-alias primary_spawn_object = player.object[1]
+alias primary_respawn = player.object[1]
 alias temp_object = global.object[1]
-alias temp_object2 = global.object[4]
 alias danger_zone = object.object[0]
 alias temp_team = global.team[0]
 alias explosive = global.object[3]
-alias bomb_carrier_player = global.player[0]
+alias bomb_carrier = global.player[0]
 alias armed = object.number[0]
 alias arm_timer = object.timer[1]
 alias disarm_timer = object.timer[2]
 alias class = object.number[0]
+alias net_temp_object = global.object[4]
+alias net_temp_object2 = global.object[5]
 alias ability_timer = player.timer[0]
 alias ability_cooldown = player.timer[1]
 alias temp_player = global.player[1]
-alias out_of_bounds = player.number[0]
-alias heard_vo = player.number[1]
-
 
 do
 	global.timer[1].set_rate(-100%)
 	if global.timer[1] == 360 and global.number[8] == 0 then
 		for each player do 
-			if current_player.is_elite() then 
-				current_player.set_loadout_palette(elite_tier_2)
-			alt
-				current_player.set_loadout_palette(spartan_tier_2)
-			end
+			current_player.set_loadout_palette(elite_tier_2)
 		end
 		game.show_message_to(all_players, none, "Tier 2 loadouts available")
 		global.number[8] = 1
@@ -115,26 +106,13 @@ do
 	end
 	if global.timer[1] == 0 and global.number[8] == 0 then
 		for each player do
-			if current_player.team == team[0] then
-				current_player.set_loadout_palette(spartan_tier_3)
-			end
-			if current_player.team == team[1] then
-				current_player.set_loadout_palette(elite_tier_3)
-			end
+			current_player.set_loadout_palette(elite_tier_3)
 		end
 	game.show_message_to(all_players, none, "Tier 3 loadouts available")
 	global.number[8] = 1
 	end
 	for each player do
 		current_player.biped.set_spawn_location_permissions(mod_player, current_player, 0)
-	end
-end
-
-for each player do
-	if current_player.heard_vo == 0 then
-		send_incident(invasion_game_start, current_player, current_player)
-		send_incident(terr_game_start, current_player, current_player)
-		current_player.heard_vo = 1
 	end
 end
 
@@ -177,17 +155,9 @@ function add_elite_lives()
 	end
 end
 
-function del_danger_zones()
-	for each object do
-		if current_object.has_forge_label("frontline") or current_object.has_forge_label("frontline_spawnpoint") then
-			current_object.danger_zone.delete()
-		end
-	end
-end
-
 function spartan_attack_success()
 	reset_timers()
-	del_danger_zones()
+	global.object[0].danger_zone.delete()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_territories_captured, false)
@@ -210,7 +180,7 @@ end
 
 function spartan_defense_success()
 	reset_timers()
-	del_danger_zones()
+	global.object[0].danger_zone.delete()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_offense, false)
@@ -234,7 +204,7 @@ end
 
 function elite_attack_success()
 	reset_timers()
-	del_danger_zones()
+	global.object[0].danger_zone.delete()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_territories_lost, false)
@@ -256,7 +226,7 @@ end
 
 function elite_defense_success()
 	reset_timers()
-	del_danger_zones()
+	global.object[0].danger_zone.delete()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_defense, false)
@@ -280,7 +250,6 @@ end
 
 function spartan_victory()
 	temp_team = team[0]
-	send_incident(inv_spartan_win, all_players, all_players)
 	game.play_sound_for(all_players, inv_cue_spartan_win_big, true)
 	phase_objective = -1
 	game.round_timer.set_rate(0%)
@@ -290,7 +259,6 @@ end
 
 function elite_victory()
 	temp_team = team[1]
-	send_incident(inv_elite_win, all_players, all_players)
 	game.play_sound_for(all_players, inv_cue_covenant_win_big, true)
 	phase_objective = -1
 	game.round_timer.set_rate(0%)
@@ -315,7 +283,7 @@ function capture_victory()
 	for each player do
 		if current_player.team == temp_team then
 			current_player.set_round_card_text("Victory!")
-			current_player.set_round_card_title("We have destroyed the enemy HQ!")
+			current_player.set_round_card_title("We have captured the enemy HQ!")
 		end
 		if current_player.team != temp_team then
 			current_player.set_round_card_text("Defeat!")
@@ -324,6 +292,7 @@ function capture_victory()
 	end
 end
 
+
 function start_sudden_death()
 	if declared_sudden_death == 0 then
 		game.play_sound_for(all_players, announce_sudden_death, false)
@@ -331,64 +300,6 @@ function start_sudden_death()
 	end
 	game.sudden_death_timer.set_rate(-100%)
 	sudden_death_active = 1
-end
-
-function negative_scaling_timers()
-	if script_option[5] == 0 and temp_int > 0 then
-		global.object[0].timer[0].set_rate(-100%)
-	end
-	if script_option[5] == 1 then
-		if temp_int == 1 then
-			global.object[0].timer[0].set_rate(-50%)
-		end
-		if temp_int == 2 then
-			global.object[0].timer[0].set_rate(-75%)
-		end
-		if temp_int == 3 then
-			global.object[0].timer[0].set_rate(-100%)
-		end
-		if temp_int == 4 then
-			global.object[0].timer[0].set_rate(-125%)
-		end
-		if temp_int == 5 then
-			global.object[0].timer[0].set_rate(-150%)
-		end
-		if temp_int == 6 then
-			global.object[0].timer[0].set_rate(-175%)
-		end
-		if temp_int >= 7 then
-			global.object[0].timer[0].set_rate(-200%)
-		end
-	end
-end
-
-function positive_scaling_timers()
-	if script_option[5] == 0 and temp_int > 0 then
-		global.object[0].timer[0].set_rate(100%)
-	end
-	if script_option[5] == 1 then
-		if temp_int == 1 then
-			global.object[0].timer[0].set_rate(50%)
-		end
-		if temp_int == 2 then
-			global.object[0].timer[0].set_rate(75%)
-		end
-		if temp_int == 3 then
-			global.object[0].timer[0].set_rate(100%)
-		end
-		if temp_int == 4 then
-			global.object[0].timer[0].set_rate(125%)
-		end
-		if temp_int == 5 then
-			global.object[0].timer[0].set_rate(150%)
-		end
-		if temp_int == 6 then
-			global.object[0].timer[0].set_rate(175%)
-		end
-		if temp_int >= 7 then
-			global.object[0].timer[0].set_rate(200%)
-		end
-	end
 end
 
 -- ANVIL EDITOR
@@ -431,38 +342,6 @@ function anvil_trigger_0()
 	end
  end
 
- function anvil_trigger2()
-   if current_object.spawn_sequence == -3 then 
-      if current_object.team == team[1] then 
-         set_scenario_interpolator_state(1, 1)
-      end
-      if current_object.team == team[3] then 
-         set_scenario_interpolator_state(2, 1)
-      end
-      if current_object.team == team[5] then 
-         set_scenario_interpolator_state(3, 1)
-      end
-      if current_object.team == team[7] then 
-         set_scenario_interpolator_state(4, 1)
-      end
-   end
-   if current_object.spawn_sequence == -4 then 
-      current_object.set_waypoint_visibility(everyone)
-      if current_object.team == team[1] then 
-         set_scenario_interpolator_state(5, 1)
-      end
-      if current_object.team == team[3] then 
-         set_scenario_interpolator_state(6, 1)
-      end
-      if current_object.team == team[5] then 
-         set_scenario_interpolator_state(7, 1)
-      end
-      if current_object.team == team[7] then 
-         set_scenario_interpolator_state(8, 1)
-      end
-   end
-end
-
 -- Init stuff
 do 
 	if global.number[0] == 0 then 
@@ -485,11 +364,11 @@ do
 			end
 			for each player do
 				if current_player.team == team[0] then 
-					current_player.set_round_card_text("Spartan")
+					current_player.set_round_card_text("Swords of Sanghelios")
 					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
 				if current_player.team == team[1] then 
-					current_player.set_round_card_text("Elite")
+					current_player.set_round_card_text("Covenant")
 					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
 			end
@@ -506,30 +385,30 @@ do
 	if sudden_death_active == 1 then 
 		if game.sudden_death_timer.is_zero() then
 			if phase_objective == 1 then
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				elite_defense_success()
 			alt
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				spartan_defense_success()
 			end
 		end
 		if phase_objective == 1 and global.object[0].reds == 0 then
 			if script_option[3] != -1 and global.object[0].capture_timer == script_option[3] then 
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				elite_defense_success()
 			end
 			if script_option[3] == -1 and global.object[0].capture_timer == global.object[0].number[3] then
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				elite_defense_success()
 			end
 		end
 		if phase_objective == 2 and global.object[0].blues == 0 then
 			if script_option[3] != -1 and global.object[0].capture_timer == script_option[3] then 
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				spartan_defense_success()
 			end
 			if script_option[3] == -1 and global.object[0].capture_timer == global.object[0].number[3] then
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				spartan_defense_success()
 			end
 		end
@@ -539,30 +418,13 @@ end
 -- Assign loadouts depending on which team the player is on, and display the appropriate round title card.
 for each player do
 	if global.timer[1] > 360 then
-		if current_player.team == team[0] then
-			current_player.set_loadout_palette(spartan_tier_1)
-			current_player.set_round_card_icon(noble)
-		end
-		if current_player.team == team[1] then
-			current_player.set_loadout_palette(elite_tier_1)
-			current_player.set_round_card_icon(covenant)
-		end
+		current_player.set_loadout_palette(elite_tier_1)
+		current_player.set_round_card_icon(invasion)
 	altif global.timer[1] > 0 then 
-		if current_player.team == team[0] then
-			current_player.set_loadout_palette(spartan_tier_2)
-		end
-		if current_player.team == team[1] then
-			current_player.set_loadout_palette(elite_tier_2)
-		end
+		current_player.set_loadout_palette(elite_tier_2)
 	alt
-		if current_player.team == team[0] then
-			current_player.set_loadout_palette(spartan_tier_3)
-		end
-		if current_player.team == team[1] then
-			current_player.set_loadout_palette(elite_tier_3)
-		end
+		current_player.set_loadout_palette(elite_tier_3)
 	end
-
 end
 
 -- Turns on coop spawning to allow respawning at territories.
@@ -575,30 +437,31 @@ for each object with label "pregame" do
 end
 
 -- Determines who is attacking first if the option is set to "Map default"
-if phase == -1 then
-	if script_option[1] == -1 then
-		for each object with label "s_first_attack" do
-			if current_object.spawn_sequence == 0 then 
-				phase_objective = 0
-			end
-			if current_object.spawn_sequence == 1 then
-				phase_objective = 1 
-			end
-			if current_object.spawn_sequence == 2 then 
-				phase_objective = 2 
+	if phase == -1 then
+		if script_option[1] == -1 then
+			for each object with label "s_first_attack" do
+				if current_object.spawn_sequence == 0 then 
+					phase_objective = 0
+				end
+				if current_object.spawn_sequence == 1 then
+					phase_objective = 1 
+				end
+				if current_object.spawn_sequence == 2 then 
+					phase_objective = 2 
+				end
 			end
 		end
+		if script_option[1] == 0 then -- If "First Attack" is set to "Both"
+			phase_objective = 0
+		end
+		if script_option[1] == 1 then -- If "First Attack" is set to "Spartans"
+			phase_objective = 1 
+		end
+		if script_option[1] == 2 then -- If "First Attack" is set to "Elites"
+			phase_objective = 2 
+		end
 	end
-	if script_option[1] == 0 then -- If "First Attack" is set to "Both"
-		phase_objective = 0
-	end
-	if script_option[1] == 1 then -- If "First Attack" is set to "Spartans"
-		phase_objective = 1 
-	end
-	if script_option[1] == 2 then -- If "First Attack" is set to "Elites"
-		phase_objective = 2 
-	end
-end
+
 
 do 
 	if phase == -1 then -- Determines what to do when the game starts
@@ -683,105 +546,26 @@ for each object with label "frontline" do
 		end
 	end
 	if phase != current_object.spawn_sequence then
-		current_object.set_waypoint_visibility(no_one)
-		if script_option[7] == 0 then
-			temp_int = phase
-			temp_int -= 1
-			temp_int2 = phase
-			temp_int2 += 1
-			if current_object.spawn_sequence == temp_int or current_object.spawn_sequence == temp_int2 then
-				for each player do
-					if current_player.team == current_object.team then
-						current_object.set_spawn_location_permissions(mod_player, current_player, 1)
-					end
+		current_object.set_waypoint_visibility(no_one) -- Makes sure any territories that are not being fought over don't have waypoints.
+		for each player do
+			if current_object.team == current_player.team and current_object.spawn_sequence != max_territories and current_object.spawn_sequence != 1 then -- If this territory isn't the final one (for either side), this allows the controlling team to spawn on it.
+				current_object.set_spawn_location_permissions(mod_player, current_player, 1)
+				temp_object = current_player.primary_respawn -- The following tries to set the default respawn point to the territory closest to the frontline.
+				if current_object.spawn_sequence > temp_object.spawn_sequence and current_player.team == team[0] then
+					current_player.primary_respawn = current_object
+				end
+				if current_object.spawn_sequence < temp_object.spawn_sequence and current_player.team == team[1] then
+					current_player.primary_respawn = current_object
 				end
 			end
-			if current_object.spawn_sequence != temp_int and current_object.spawn_sequence != temp_int2 then
-				current_object.set_spawn_location_permissions(no_one)
+			if current_object.team != current_player.team then
+				current_object.set_spawn_location_permissions(mod_player, current_player, 0)
 			end
-		end
-		if script_option[7] == 1 then
-			current_object.set_spawn_location_permissions(allies)
 		end
 	end
 	for each player do
-		temp_object = current_player.primary_spawn_object -- The following tries to set the default respawn point to the territory closest to the frontline.
-		temp_object2 = current_object.danger_zone
-			if current_object.spawn_sequence > temp_object.spawn_sequence and current_player.team == team[0] and temp_object2.blues == 0 then
-				current_player.primary_spawn_object = current_object
-			end
-			if current_object.spawn_sequence < temp_object.spawn_sequence and current_player.team == team[1] and temp_object2.reds == 0 then
-				current_player.primary_spawn_object = current_object
-			end
-		if current_object.team != current_player.team then
-			current_object.set_spawn_location_permissions(mod_player, current_player, 0)
-		end
-	end
-	for each player do
-		if current_object == current_player.primary_spawn_object then
+		if current_object == current_player.primary_respawn then
 			current_player.set_primary_respawn_object(current_object)
-		end
-	end
-end
-
--- Allow multiple spawnpoints for one frontline
-for each object with label "frontline_spawnpoint" do
-	temp_object = current_object
-	for each object with label "frontline" do
-		if temp_object.spawn_sequence == current_object.spawn_sequence then
-			temp_object.team = current_object.team
-		end
-	end
-	if phase == current_object.spawn_sequence then
-		if current_object.danger_zone == no_object then -- Sets up a danger zone that checks if enemies are near the spawnpoint.
-			current_object.danger_zone = current_object.place_at_me(hill_marker, none, never_garbage_collect, 0, 0, 0, default)
-			temp_object = no_object
-			temp_object = current_object.danger_zone
-			temp_object.team = current_object.team
-			temp_object.set_shape(cylinder, 150, 150, 150)
-		end
-		temp_object = no_object
-		temp_object = current_object.danger_zone
-		temp_object.reds = 0
-		temp_object.blues = 0
-		for each player do -- Counts the number of players from each side who are in the danger zone.
-			if temp_object.shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					temp_object.reds += 1
-				end
-				if current_player.team == team[1] then
-					temp_object.blues += 1 
-				end 
-			end
-		end -- If the danger zone is clear of enemies they can spawn at the frontline spawnpoints, otherwise they can't
-		if current_object.team == team[0] and temp_object.blues <= 0 then
-			current_object.set_spawn_location_permissions(allies)
-		end
-		if current_object.team == team[0] and temp_object.blues > 0 then
-			current_object.set_spawn_location_permissions(no_one)
-		end
-		if current_object.team == team[1] and temp_object.reds <= 0 then
-			current_object.set_spawn_location_permissions(allies)
-		end
-		if current_object.team == team[1] and temp_object.reds > 0 then
-			current_object.set_spawn_location_permissions(no_one)
-		end
-	end
-	if script_option[7] == 0 then -- If "Spawn Locations" is set to "Current frontline and HQ"
-		temp_int = phase
-		temp_int -= 1
-		temp_int2 = phase
-		temp_int2 += 1
-		if current_object.spawn_sequence == temp_int or current_object.spawn_sequence == temp_int2 then
-			current_object.set_spawn_location_permissions(allies)
-		end
-		if current_object.spawn_sequence != temp_int and current_object.spawn_sequence != temp_int2 then
-			current_object.set_spawn_location_permissions(no_one)
-		end
-	end
-	if script_option[7] == 1 then -- If "Spawn Locations" is set to "Everywhere"
-		if current_object.spawn_sequence != phase then
-			current_object.set_spawn_location_permissions(allies)
 		end
 	end
 end
@@ -805,14 +589,14 @@ do
 			if global.object[0].timer[0].is_zero() then -- Initiates a Spartan victory
 				global.object[0].team = team[0]
 				global.object[0].timer[0].reset()
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				spartan_attack_success()
 			end
 		altif global.object[0].blues > global.object[0].reds then -- if there are more elites than spartans
 			global.object[0].timer[0].set_rate(-100%)
 			if global.object[0].timer[0].is_zero() then -- Initiates an Elite victory.
 				global.object[0].team = team[1]
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				elite_attack_success()
 			end
 		altif global.object[0].timer[0] != script_option[3] then -- If no Spartan or Elites are in the territory, it will automatically regenerate up to 20.
@@ -821,15 +605,40 @@ do
 			global.object[0].timer[0].set_rate(0%)
 		end
 	end
-	if phase_objective == 1 and phase != max_territories then -- If the spartans are attacking
+	if phase_objective == 1 then -- If the spartans are attacking
 		if global.object[0].reds > global.object[0].blues then --If there are more spartans than Elites, the capture timer will go down.
 			temp_int = global.object[0].reds
 			temp_int -= global.object[0].blues
-			negative_scaling_timers()
+			if script_option[5] == 0 and temp_int > 0 then
+				global.object[0].timer[0].set_rate(-100%)
+			end
+			if script_option[5] == 1 then	
+				if temp_int == 1 then
+					global.object[0].timer[0].set_rate(-50%)
+				end
+				if temp_int == 2 then
+					global.object[0].timer[0].set_rate(-75%)
+				end
+				if temp_int == 3 then
+					global.object[0].timer[0].set_rate(-100%)
+				end
+				if temp_int == 4 then
+					global.object[0].timer[0].set_rate(-125%)
+				end
+				if temp_int == 5 then
+					global.object[0].timer[0].set_rate(-150%)
+				end
+				if temp_int == 6 then
+					global.object[0].timer[0].set_rate(-175%)
+				end
+				if temp_int == 7 or temp_int == 8 then
+					global.object[0].timer[0].set_rate(-200%)
+				end
+			end
 			if global.object[0].timer[0].is_zero() then
 				global.object[0].team = team[0]
 				global.object[0].timer[0].reset()
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				if phase == max_territories then -- If this is the last territory, the game will end with a Spartan victory.
 					spartan_victory()
 					capture_victory()
@@ -840,12 +649,37 @@ do
 		altif global.object[0].blues > global.object[0].reds and global.object[0].timer[0] != script_option[3] then -- If there are more Elites than Spartans in the territory, the timer will regenerate up to the set amount.
 			temp_int = global.object[0].blues
 			temp_int -= global.object[0].reds
-			positive_scaling_timers()
+			if script_option[5] == 0 and temp_int > 0 then
+				global.object[0].timer[0].set_rate(-100%)
+			end
+			if script_option[5] == 1 then
+				if temp_int == 1 then
+					global.object[0].timer[0].set_rate(50%)
+				end
+				if temp_int == 2 then
+					global.object[0].timer[0].set_rate(75%)
+				end
+				if temp_int == 3 then
+					global.object[0].timer[0].set_rate(100%)
+				end
+				if temp_int == 4 then
+					global.object[0].timer[0].set_rate(125%)
+				end
+				if temp_int == 5 then
+					global.object[0].timer[0].set_rate(150%)
+				end
+				if temp_int == 6 then
+					global.object[0].timer[0].set_rate(175%)
+				end
+				if temp_int == 7 or temp_int == 8 then
+					global.object[0].timer[0].set_rate(200%)
+				end
+			end
 		alt 
 			global.object[0].timer[0].set_rate(0%)
 		end
 		if game.round_time_limit > 0 and game.round_timer.is_zero() and global.object[0].reds <= 0 then -- If no Spartans are in the territory when the round timer ends then they will fail the attack.
-			del_danger_zones()
+			global.object[0].danger_zone.delete()
 			global.object[0] = no_object
 			phase -= 1
 			elite_defense_success()
@@ -859,15 +693,35 @@ do
 			global.object[0].set_waypoint_priority(high)
 		end
 	end
-	if phase_objective == 2 and phase != 1 then -- If the elites are attacking
+	if phase_objective == 2 then -- If the elites are attacking
 		if global.object[0].blues > global.object[0].reds then --If there are more elites than spartans
 			temp_int = global.object[0].blues
 			temp_int -= global.object[0].reds
-			negative_scaling_timers()
+			if temp_int == 1 then
+				global.object[0].timer[0].set_rate(-50%)
+			end
+			if temp_int == 2 then
+				global.object[0].timer[0].set_rate(-75%)
+			end
+			if temp_int == 3 then
+				global.object[0].timer[0].set_rate(-100%)
+			end
+			if temp_int == 4 then
+				global.object[0].timer[0].set_rate(-125%)
+			end
+			if temp_int == 5 then
+				global.object[0].timer[0].set_rate(-150%)
+			end
+			if temp_int == 6 then
+				global.object[0].timer[0].set_rate(-175%)
+			end
+			if temp_int == 7 or temp_int == 8 then
+				global.object[0].timer[0].set_rate(-200%)
+			end
 			if global.object[0].timer[0].is_zero() then -- Initiates an Elite victory
 				global.object[0].team = team[1]
 				global.object[0].timer[0].reset()
-				del_danger_zones()
+				global.object[0].danger_zone.delete()
 				if phase == 1 then -- If this is the last territory, the game will end with an Elite victory.
 					elite_victory()
 					capture_victory()
@@ -878,12 +732,32 @@ do
 		altif global.object[0].reds > global.object[0].blues and global.object[0].timer[0] != script_option[3] then --If there are more Spartans than Elites in the territory, the timer will regenerate up to 20.
 			temp_int = global.object[0].reds
 			temp_int -= global.object[0].blues
-			positive_scaling_timers()
+			if temp_int == 1 then
+				global.object[0].timer[0].set_rate(50%)
+			end
+			if temp_int == 2 then
+				global.object[0].timer[0].set_rate(75%)
+			end
+			if temp_int == 3 then
+				global.object[0].timer[0].set_rate(100%)
+			end
+			if temp_int == 4 then
+				global.object[0].timer[0].set_rate(125%)
+			end
+			if temp_int == 5 then
+				global.object[0].timer[0].set_rate(150%)
+			end
+			if temp_int == 6 then
+				global.object[0].timer[0].set_rate(175%)
+			end
+			if temp_int == 7 or temp_int == 8 then
+				global.object[0].timer[0].set_rate(200%)
+			end
 		alt 
 			global.object[0].timer[0].set_rate(0%)
 		end
 		if game.round_time_limit > 0 and game.round_timer.is_zero() and global.object[0].blues <= 0 then -- If no elites are in the territory when the round timer ends then they will fail the attack.
-			del_danger_zones()
+			global.object[0].danger_zone.delete()
 			global.object[0] = no_object
 			phase += 1
 			spartan_defense_success()
@@ -903,152 +777,6 @@ end
 for each player do
 	if global.object[0].shape_contains(current_player.biped) then
 		global.object[0].set_progress_bar(object.capture_timer, mod_player, current_player, 1)
-	end
-end
-
--- Dynamic kill zones
-function attach_soft_kill()
-    current_player.softkill_object = current_player.biped.place_at_me(soft_kill_boundary, none, never_garbage_collect, 0, 0, 0, none)
-    current_player.softkill_object.set_shape(sphere, 2)
-    current_player.softkill_object.attach_to(current_player.biped, 0, 0, 0, absolute)
-    temp_object = current_player.softkill_object
-end
-
-for each player do
-	current_player.out_of_bounds = 0
-	for each object with label "killzone" do
-        if current_object.shape_contains(current_player.biped) then
-            if current_player.softkill_object == no_object and current_player.team == team[0] and current_object.spawn_sequence > phase then
-				current_player.out_of_bounds += 1
-            end
-            if current_player.softkill_object == no_object and current_player.team == team[1] and current_object.spawn_sequence < phase then
-                current_player.out_of_bounds += 1
-            end
-        end
-    end
-	if current_player.out_of_bounds > 0 then
-		attach_soft_kill()
-		if current_player.team == team[0] then
-			temp_object.team = team[1]
-		alt
-			temp_object.team = team[0]
-		end
-	end
-	if current_player.out_of_bounds == 0 and current_player.softkill_object != no_object then
-		current_player.softkill_object.delete()
-	end
-end
-
--- Assault
-if phase == max_territories or phase == 1 then
-	if explosive == no_object then
-		temp_int = phase
-		if phase_objective == 1 then
-			temp_int -= 1
-		end
-		if phase_objective == 2 then
-			temp_int += 1
-		end
-		for each object with label "frontline" do
-			if current_object.spawn_sequence == temp_int then
-				explosive = current_object.place_at_me(bomb, none, never_garbage_collect, 0, 0, 2, none)
-				explosive.team = current_object.team
-				explosive.set_weapon_pickup_priority(high)
-				explosive.set_waypoint_icon(bomb)
-				explosive.set_waypoint_priority(high)
-				explosive.set_waypoint_visibility(everyone)
-				explosive.set_invincibility(1)
-				explosive.set_pickup_permissions(allies)
-			end
-		end
-	end
-	if explosive != no_object and explosive.is_out_of_bounds() then
-		explosive.delete()
-		send_incident(bomb_reset, team[0], all_players)
-	end
-	if bomb_carrier_player == no_player then
-		bomb_carrier_player = explosive.try_get_carrier()
-		if bomb_carrier_player != no_player then
-			send_incident(bomb_taken, bomb_carrier_player, bomb_carrier_player)
-		end
-	end
-	if bomb_carrier_player != no_player then
-		bomb_carrier_player = explosive.try_get_carrier()
-		if bomb_carrier_player == no_player then
-			send_incident(bomb_dropped, team[0], team[0])
-		end
-	end
-	for each player do
-		if current_player == bomb_carrier_player then
-			current_player.biped.set_waypoint_icon(defend)
-		end
-		if current_player != bomb_carrier_player then
-			current_player.biped.set_waypoint_icon(none)
-		end
-	end
-	global.object[0].armed = 0
-	if global.object[0].shape_contains(bomb_carrier_player.biped) then
-		global.object[0].arm_timer.set_rate(-100%)
-		global.object[0].set_progress_bar(object.arm_timer, everyone)
-	end
-	if not global.object[0].shape_contains(bomb_carrier_player.biped) and global.object[0].object[1] == no_object then
-		global.object[0].arm_timer.set_rate(100%)
-	end
-	if global.object[0].arm_timer.is_zero() then
-		send_incident(bomb_armed, bomb_carrier_player, all_players)
-		send_incident(bomb_planted, bomb_carrier_player, bomb_carrier_player)
-		bomb_carrier_player = no_player
-		explosive.detach()
-		explosive.attach_to(global.object[0], 0, 0, 2, absolute)
-		explosive.set_pickup_permissions(no_one)
-		global.object[0].object[1] = explosive
-		global.object[0].set_progress_bar(object.capture_timer, everyone)
-		global.object[0].arm_timer.reset()
-	end
-	if global.object[0].object[1] != no_object then
-		for each player do
-			if global.object[0].shape_contains(current_player.biped) and current_player.team == global.object[0].team then
-				global.object[0].number[0] = 1
-			end
-		end
-		if global.object[0].number[0] == 1 then
-			global.object[0].timer[0].set_rate(0%)
-			global.object[0].disarm_timer.set_rate(100%)
-		end
-		if global.object[0].number[0] == 0 then
-			global.object[0].timer[0].set_rate(-100%)
-			global.object[0].disarm_timer.set_rate(-100%)
-		end
-		if global.object[0].disarm_timer == 5 then
-			send_incident(bomb_disarmed, team[1], all_players)
-			explosive.delete()
-			global.object[0].disarm_timer.reset()
-		end
-		if global.object[0].timer[0].is_zero() then
-			send_incident(bomb_detonated, team[0], all_players)
-			explosive.set_invincibility(0)
-			explosive.kill(false)
-			explosive.delete()
-			if phase_objective == 1 then
-				spartan_victory()
-			end
-			if phase_objective == 2 then
-				elite_victory()
-			end
-			capture_victory()
-		end
-	end
-	if game.round_time_limit > 0 and game.round_timer.is_zero() then
-		del_danger_zones()
-		explosive.delete()
-		if phase == max_territories then
-			phase -= 1
-			elite_defense_success()
-		end
-		if phase == 1 then
-			phase += 1
-			spartan_defense_success()
-		end
 	end
 end
 
@@ -1083,15 +811,6 @@ do
 	end
 end
 
--- Damage boost
-for each player do
-	temp_object = current_player.try_get_vehicle()
-	temp_object2 = current_player.try_get_weapon(primary)
-	if temp_object.has_forge_label("damage_boost") or temp_object2.has_forge_label("damage_boost") then
-		current_player.apply_traits(script_traits[15])
-	end
-end
-
 --=== LOADOUT SYSTEM ===--
 
 enum class
@@ -1115,282 +834,242 @@ function save_player_info()
     current_player.object[1] = current_player.try_get_weapon(secondary)
     current_player.biped.remove_weapon(primary, false)
     current_player.biped.remove_weapon(secondary, false)
-    temp_object = current_player.biped
+    net_temp_object = current_player.biped
 end
 
 function apply_player_info()
-    current_player.set_biped(temp_object2)
-    temp_object.delete()
+    current_player.set_biped(net_temp_object2)
+    net_temp_object.delete()
     current_player.biped.remove_weapon(primary, true)
     current_player.biped.remove_weapon(secondary, true)
     current_player.add_weapon(current_player.object[0])
     current_player.add_weapon(current_player.object[1])
 end
 
-
 -- Class detection
 for each player do
-	current_player.player[0] = no_player
     if current_player.is_elite() and current_player.biped != no_object then
-        temp_object = current_player.biped
-        if temp_object.class == class.none then
-            temp_object = current_player.try_get_weapon(primary)
-            if temp_object.is_of_type(plasma_rifle) then -- Check if they're an elite minor or major
-                temp_object = current_player.try_get_armor_ability()
-                if temp_object.is_of_type(evade) then -- minor
+        net_temp_object = current_player.biped
+        if net_temp_object.class == class.none then
+            net_temp_object = current_player.try_get_weapon(primary)
+            if net_temp_object.is_of_type(plasma_rifle) then -- Check if they're an elite minor or major
+                net_temp_object = current_player.try_get_armor_ability()
+                if net_temp_object.is_of_type(evade) then -- minor
                     save_player_info()
-                    temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, minor)
+                    net_temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, minor)
                     apply_player_info()
-                    temp_object = temp_object2.place_between_me_and(temp_object2, evade, 0)
+                    net_temp_object = net_temp_object2.place_between_me_and(net_temp_object2, evade, 0)
                     current_player.plasma_grenades = 1
                     current_player.frag_grenades = 0
-                    temp_object2.class = class.minor
+                    net_temp_object2.class = class.minor
                 end
-                if temp_object.is_of_type(drop_shield) then -- major
+                if net_temp_object.is_of_type(drop_shield) then -- major
                     save_player_info()
-                    temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, officer)
+                    net_temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, officer)
                     apply_player_info()
-                    temp_object = temp_object2.place_between_me_and(temp_object2, drop_shield, 0)
+                    net_temp_object = net_temp_object2.place_between_me_and(net_temp_object2, drop_shield, 0)
                     current_player.plasma_grenades = 1
                     current_player.frag_grenades = 0
-                    temp_object2.class = class.major
-					game.show_message_to(current_player, none, "Warden selected: Use armor ability to active Overcharge and prevent weapon overheat.")
+                    net_temp_object2.class = class.major
                 end
             end
-            if temp_object.is_of_type(energy_sword) then -- Zealot
+            if net_temp_object.is_of_type(energy_sword) then -- Zealot
                 save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
+                net_temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
                 apply_player_info()
-                temp_object = temp_object2.place_between_me_and(temp_object2, hologram, 0)
+                net_temp_object = net_temp_object2.place_between_me_and(net_temp_object2, hologram, 0)
                 current_player.plasma_grenades = 0
                 current_player.frag_grenades = 0
-                temp_object2.class = class.zealot
-				game.show_message_to(current_player, none, "Zealot selected: 1.5x overshield and 1.2x speed")
+                net_temp_object2.class = class.zealot
             end
-			if temp_object.is_of_type(plasma_repeater) then -- Ultra
-				temp_object = current_player.try_get_armor_ability()
-				if temp_object.is_of_type(evade) or temp_object.is_of_type(drop_shield) then
-					save_player_info()
-					temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, ultra)
-					apply_player_info()
-					temp_object = temp_object2.place_between_me_and(temp_object2, drop_shield, 0)
-					current_player.plasma_grenades = 1
-					current_player.frag_grenades = 0
-					temp_object2.class = class.ultra
-					game.show_message_to(current_player, none, "Champion selected: Berserk when shields drop")
-				end
-			end
-            temp_object = current_player.try_get_armor_ability()
-            if temp_object.is_of_type(active_camo_aa) then -- Spec ops
+            net_temp_object = current_player.try_get_armor_ability()
+            if net_temp_object.is_of_type(active_camo_aa) then -- Spec ops
                 save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, spec_ops)
+                net_temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, spec_ops)
                 apply_player_info()
-                temp_object = temp_object2.place_between_me_and(temp_object2, active_camo_aa, 0)
+                net_temp_object = net_temp_object2.place_between_me_and(net_temp_object2, active_camo_aa, 0)
                 current_player.plasma_grenades = 1
                 current_player.frag_grenades = 0
-                temp_object2.class = class.spec_ops
-				game.show_message_to(current_player, none, "Spec Ops selected: Permenant active camo, not visible while moving, no shields")
+                net_temp_object2.class = class.spec_ops
             end
-            if temp_object.is_of_type(jetpack) then -- Ranger
+            if net_temp_object.is_of_type(drop_shield) then -- Ultra
                 save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, jetpack)
+                net_temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, ultra)
                 apply_player_info()
-                temp_object = temp_object2.place_between_me_and(temp_object2, jetpack, 0)
+                net_temp_object = net_temp_object2.place_between_me_and(net_temp_object2, drop_shield, 0)
+                current_player.plasma_grenades = 1
+                current_player.frag_grenades = 0
+                net_temp_object2.class = class.ultra
+            end
+            if net_temp_object.is_of_type(jetpack) then -- Ranger
+                save_player_info()
+                net_temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, jetpack)
+                apply_player_info()
+                net_temp_object = net_temp_object2.place_between_me_and(net_temp_object2, jetpack, 0)
                 current_player.plasma_grenades = 0
                 current_player.frag_grenades = 0
-                temp_object2.class = class.ranger
+                net_temp_object2.class = class.ranger
             end
         end
     end
-    if current_player.is_spartan() and current_player.biped != no_object then
-		temp_object2 = current_player.biped
-		if temp_object2.class == class.none then
-			temp_object = current_player.try_get_weapon(primary)
-			if temp_object.is_of_type(grenade_launcher) then
-				temp_object2.class = class.grenadier
-				game.show_message_to(current_player, none, "Grenadier selected: Grenades regenerate")
-			end
-			if temp_object.is_of_type(magnum) then
-				temp_object = current_player.try_get_armor_ability()
-				if temp_object.is_of_type(sprint) then
-					temp_object2.class = class.grenadier
-					game.show_message_to(current_player, none, "Grenadier selected: Grenades regenerate")
-				alt
-					temp_object2.class = class.corpsman
-					game.show_message_to(current_player, none, "Corpsman selected: Passivley fortify allies giving them extra damage resistance")
-				end
-			end
-			if temp_object.is_of_type(dmr) then
-				temp_object2.class = class.marksman
-				game.show_message_to(current_player, none, "Marksman selected: 2x radar range")
-			end
-			if temp_object.is_of_type(detached_machine_gun_turret) then
-				temp_object2.class = class.juggernaut
-			end
-			temp_object = current_player.try_get_armor_ability()
-			if temp_object.is_of_type(sprint) then
-				temp_object2.class = class.guard
-			end
-			if temp_object.is_of_type(hologram) then
-				temp_object2.class = class.operator
-				game.show_message_to(current_player, none, "Operator selected: Enemies always appear on radar")
-			end
-		end
-    end
-	temp_object = current_player.biped
-    if temp_object.class == class.minor then
+    if not current_player.is_elite() then
+        if current_player.biped != no_object then
+            net_temp_object2 = current_player.biped
+            if net_temp_object2.class == class.none then
+                net_temp_object = current_player.try_get_weapon(primary)
+                if net_temp_object.is_of_type(magnum) then
+                    net_temp_object = current_player.try_get_armor_ability()
+                    if net_temp_object.is_of_type(sprint) then
+                        net_temp_object2.class = class.grenadier
+                    alt
+                        net_temp_object2.class = class.corpsman
+                    end
+                end
+                if net_temp_object.is_of_type(dmr) then
+                    net_temp_object2.class = class.marksman
+                end
+                if net_temp_object.is_of_type(detached_machine_gun_turret) then
+                    net_temp_object2.class = class.juggernaut
+                end
+                net_temp_object = current_player.try_get_armor_ability()
+                if net_temp_object.is_of_type(sprint) then
+                    net_temp_object2.class = class.guard
+                end
+                if net_temp_object.is_of_type(hologram) then
+                    net_temp_object2.class = class.operator
+                end
+            end
+        end
+    end     
+end
+
+-- Class abilities
+for each player do 
+    net_temp_object = current_player.biped
+    if net_temp_object.class == class.minor then
         current_player.apply_traits(script_traits[0])
     end
-    if temp_object.class == class.major then
+    if net_temp_object.class == class.major then
         current_player.apply_traits(script_traits[1])
         if current_player.ability_cooldown > 0 then
             current_player.apply_traits(script_traits[11])
         end
-        temp_object.set_shape(cylinder, 23, 23, 23)
+        net_temp_object.set_shape(cylinder, 7, 7, 7)
         current_player.ability_cooldown.set_rate(-100%)
-        temp_object2 = current_player.try_get_armor_ability()
-        if temp_object2.is_in_use() then
-            temp_object2.delete()
-            temp_object2 = current_player.biped.place_between_me_and(current_player.biped, drop_shield, 0)
+        net_temp_object2 = current_player.try_get_armor_ability()
+        if net_temp_object2.is_in_use() then
+            net_temp_object2.delete()
+            net_temp_object2 = current_player.biped.place_between_me_and(current_player.biped, drop_shield, 0)
             if current_player.ability_cooldown == 0 then
                 current_player.ability_timer = 7
                 current_player.ability_timer.set_rate(-100%)
                 current_player.ability_cooldown = 30
             end
         end
-        temp_object2 = current_player.try_get_weapon(primary)
+        net_temp_object2 = current_player.try_get_weapon(primary)
         if current_player.ability_timer > 0 then
-            if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object.is_of_type(plasma_repeater) then
+            if net_temp_object2.is_of_type(plasma_rifle) or net_temp_object2.is_of_type(plasma_pistol) or net_temp_object2.is_of_type(detached_plasma_cannon) or net_temp_object.is_of_type(plasma_repeater) then
                 current_player.apply_traits(script_traits[9])
+                net_temp_object.set_shape_visibility(allies)
             end
         end
         if current_player.ability_timer == 0 then
-            temp_object.set_shape_visibility(no_one)
+            net_temp_object.set_shape_visibility(no_one)
         end
         temp_player = current_player
         for each player do
-            temp_object2 = current_player.try_get_weapon(primary)
-			if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object.is_of_type(plasma_repeater) or current_player == temp_player then
-				if temp_player.ability_timer > 0 and current_player.team == temp_player.team then
-					temp_object.set_shape_visibility(mod_player, current_player, 1)
-				alt
-					temp_object.set_shape_visibility(mod_player, current_player, 0)
-				end
-			end
-            if temp_object.shape_contains(current_player.biped) and temp_player.ability_timer > 0 and current_player.team == temp_player.team then
-                if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object.is_of_type(plasma_repeater) then
+            net_temp_object2 = current_player.try_get_weapon(primary)
+            if net_temp_object.shape_contains(current_player.biped) and temp_player.ability_timer > 0 then
+                if net_temp_object2.is_of_type(plasma_rifle) or net_temp_object2.is_of_type(plasma_pistol) or net_temp_object2.is_of_type(detached_plasma_cannon) or net_temp_object.is_of_type(plasma_repeater) then
                     current_player.apply_traits(script_traits[9])
                 end
             end
         end
     end
-    if temp_object.class == class.spec_ops then
+    if net_temp_object.class == class.spec_ops then
         current_player.apply_traits(script_traits[2])
     end
-    if temp_object.class == class.ultra then
+    if net_temp_object.class == class.ultra then
         current_player.apply_traits(script_traits[3])
-        temp_int = temp_object.shields
-        temp_object2 = current_player.try_get_vehicle()
-        if temp_int == 0 and temp_object2 == no_object then
+        temp_int = net_temp_object.shields
+        if temp_int == 0 then
             current_player.ability_timer = 10
             current_player.ability_timer.set_rate(-100%)
         end
         if current_player.ability_timer > 0 then
             current_player.apply_traits(script_traits[10])
-            temp_object = current_player.try_get_weapon(primary)
-            if not temp_object.is_of_type(energy_sword) then
+            net_temp_object = current_player.try_get_weapon(primary)
+            if not net_temp_object.is_of_type(energy_sword) then
                 current_player.biped.remove_weapon(primary, false)
                 current_player.biped.add_weapon(energy_sword, force)
             end
-            temp_object = current_player.try_get_armor_ability()
-            if not temp_object.is_of_type(sprint) then
-                temp_object.delete()
-                temp_object = current_player.biped.place_between_me_and(current_player.biped, sprint, 0)
+            net_temp_object = current_player.try_get_armor_ability()
+            if not net_temp_object.is_of_type(sprint) then
+                net_temp_object.delete()
+                net_temp_object = current_player.biped.place_between_me_and(current_player.biped, sprint, 0)
             end
         end
         if current_player.ability_timer == 0 then
-            temp_object = current_player.try_get_weapon(primary)
-            if temp_object.is_of_type(energy_sword) then
-                temp_object.delete()
+            net_temp_object = current_player.try_get_weapon(primary)
+            if net_temp_object.is_of_type(energy_sword) then
+                net_temp_object.delete()
             end
-            temp_object = current_player.try_get_armor_ability()
-            if temp_object.is_of_type(sprint) then
-                temp_object.delete()
-                temp_object = current_player.biped.place_between_me_and(current_player.biped, drop_shield, 0)
+            net_temp_object = current_player.try_get_armor_ability()
+            if net_temp_object.is_of_type(sprint) then
+                net_temp_object.delete()
+                net_temp_object = current_player.biped.place_between_me_and(current_player.biped, drop_shield, 0)
             end
         end
     end
-    if temp_object.class == class.ranger then
+    if net_temp_object.class == class.ranger then
         current_player.apply_traits(script_traits[4])
     end
-    if temp_object.class == class.zealot then
+    if net_temp_object.class == class.zealot then
         current_player.apply_traits(script_traits[5])
     end
-    if temp_object.class == class.marksman then
+    if net_temp_object.class == class.marksman then
         current_player.apply_traits(script_traits[7])
     end
-    if temp_object.class == class.operator then
+    if net_temp_object.class == class.operator then
         current_player.apply_traits(script_traits[12])
     end
-    if temp_object.class == class.corpsman then
-        temp_object.set_shape(cylinder, 23, 23, 23)
-		temp_player = current_player
-		temp_int = 0
+    if net_temp_object.class == class.corpsman then
+        net_temp_object.set_shape(cylinder, 7, 7, 7)
         for each player do
-            if temp_object.shape_contains(current_player.biped) and current_player.team == temp_player.team then
-				current_player.player[0] = temp_player
+            if net_temp_object.shape_contains(current_player.biped) then
                 current_player.apply_traits(script_traits[13])
-				script_widget[2].set_visibility(current_player, true)
-				script_widget[2].set_text("Fortified by %s\r\nDamage resistance and faster shield recharge", hud_player.player[0])
-				if current_player != temp_player then
-					temp_int += 1
-				end
-			end
+            end
         end
-		if temp_int > 0 then
-			script_widget[3].set_visibility(temp_player, true)
-			script_widget[3].set_text("Fortifying allies")
-		end
     end
-    if temp_object.class == class.grenadier then
-        current_player.apply_traits(script_traits[12])
-    end  
+    if net_temp_object.class == class.grenadier then
+        current_player.apply_traits(script_traits[14])
+    end
 end
 
 -- Anti-tryhard
 if script_option[6] == 1 then
-	for each player do
-		temp_object = current_player.biped
-		if temp_object.class != class.marksman then
-			for each object do
-				if current_object.is_of_type(dmr) then
-					current_object.set_pickup_permissions(mod_player, current_player, 0)
-				end
-			end
-		end
-		if temp_object.class != class.ranger then
-			for each object do
-				if current_object.is_of_type(needle_rifle) then
-					current_object.set_pickup_permissions(mod_player, current_player, 0)
-				end
-			end
-		end
-		if temp_object.class != class.zealot then
-			for each object do
-				if current_object.is_of_type(energy_sword) then
-					current_object.set_pickup_permissions(mod_player, current_player, 0)
-				end
-			end
-		end
-		temp_object = current_player.biped
-		temp_object2 = current_player.try_get_weapon(primary)
-		if temp_object.class == class.marksman and temp_object2 != no_object then
-			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) then
-				current_player.biped.remove_weapon(primary, false)
-				game.show_message_to(current_player, none, "Weapon prohibited")
-			end
-		end
-	end
+    net_temp_object = current_player.biped
+    if net_temp_object.class != class.marksman then
+        for each object do
+            if current_object.is_of_type(dmr) then
+                current_object.set_pickup_permissions(mod_player, current_player, 0)
+            end
+        end
+    end
+    if net_temp_object.class != class.ranger then
+        for each object do
+            if current_object.is_of_type(needle_rifle) then
+                current_object.set_pickup_permissions(mod_player, current_player, 0)
+            end
+        end
+    end
+    if net_temp_object.class != class.zealot then
+        for each object do
+            if current_object.is_of_type(energy_sword) then
+                current_object.set_pickup_permissions(mod_player, current_player, 0)
+            end
+        end
+    end
 end
 
 -- Ability widgets
@@ -1399,18 +1078,15 @@ for each player do
         script_widget[0].set_visibility(current_player, false)
         script_widget[1].set_visibility(current_player, false)
     end
-    temp_object = current_player.biped
-    if temp_object.class == class.major and current_player.ability_timer > 0 then
+    net_temp_object = current_player.biped
+    if net_temp_object.class == class.major and current_player.ability_timer > 0 then
         script_widget[0].set_visibility(current_player, true)
-        script_widget[0].set_text("OVERCHARGE %n\r\nWeapons won't overheat", hud_player.ability_timer)
+        script_widget[0].set_text("OVERCHARGE %n", hud_player.ability_timer)
     end
-    if temp_object.class == class.ultra and current_player.ability_timer > 0 then
+    if net_temp_object.class == class.ultra and current_player.ability_timer > 0 then
         script_widget[1].set_visibility(current_player, true)
         script_widget[1].set_text("BERSERK %n", hud_player.ability_timer)
     end
-	if current_player.player[0] == no_player then
-		script_widget[2].set_visibility(current_player, false)
-	end
 end
 
 --=== ANVIL EDITOR STUFF BELOW ===--
@@ -1546,7 +1222,35 @@ for each object with label "attach_base" do
        if current_object.spawn_sequence == 18 then 
           current_object.object[0] = current_object.place_at_me(longsword, none, never_garbage_collect, 0, 0, 0, none)
        end
-       anvil_trigger2()
+       if current_object.spawn_sequence == -3 then 
+          if current_object.team == team[1] then 
+             set_scenario_interpolator_state(1, 1)
+          end
+          if current_object.team == team[3] then 
+             set_scenario_interpolator_state(2, 1)
+          end
+          if current_object.team == team[5] then 
+             set_scenario_interpolator_state(3, 1)
+          end
+          if current_object.team == team[7] then 
+             set_scenario_interpolator_state(4, 1)
+          end
+       end
+       if current_object.spawn_sequence == -4 then 
+          current_object.set_waypoint_visibility(everyone)
+          if current_object.team == team[1] then 
+             set_scenario_interpolator_state(5, 1)
+          end
+          if current_object.team == team[3] then 
+             set_scenario_interpolator_state(6, 1)
+          end
+          if current_object.team == team[5] then 
+             set_scenario_interpolator_state(7, 1)
+          end
+          if current_object.team == team[7] then 
+             set_scenario_interpolator_state(8, 1)
+          end
+       end
        current_object.object[0].copy_rotation_from(current_object, true)
        if current_object.team == team[0] and current_object.spawn_sequence != -5 then 
           current_object.object[0].attach_to(current_object, 0, 0, 0, relative)
@@ -1686,6 +1390,34 @@ for each object with label "attach_base" do
        end
     end
     for each object with label "spawner" do
-		anvil_trigger2()
+       if current_object.spawn_sequence == -3 then 
+          if current_object.team == team[1] then 
+             set_scenario_interpolator_state(1, 1)
+          end
+          if current_object.team == team[3] then 
+             set_scenario_interpolator_state(2, 1)
+          end
+          if current_object.team == team[5] then 
+             set_scenario_interpolator_state(3, 1)
+          end
+          if current_object.team == team[7] then 
+             set_scenario_interpolator_state(4, 1)
+          end
+       end
+       if current_object.spawn_sequence == -4 then 
+          current_object.set_waypoint_visibility(everyone)
+          if current_object.team == team[1] then 
+             set_scenario_interpolator_state(5, 1)
+          end
+          if current_object.team == team[3] then 
+             set_scenario_interpolator_state(6, 1)
+          end
+          if current_object.team == team[5] then 
+             set_scenario_interpolator_state(7, 1)
+          end
+          if current_object.team == team[7] then 
+             set_scenario_interpolator_state(8, 1)
+          end
+       end
     end
  end
