@@ -29,6 +29,7 @@ declare player.object[1] with network priority local
 declare player.object[2] with network priority local
 declare player.timer[0]
 declare player.timer[1]
+declare player.timer[2] = 2
 declare player.player[0] with network priority local
 declare player.number[0] with network priority low
 declare player.number[1] with network priority local
@@ -95,6 +96,7 @@ alias ability_cooldown = player.timer[1]
 alias temp_player = global.player[1]
 alias out_of_bounds = player.number[0]
 alias heard_vo = player.number[1]
+alias vo_timer = player.timer[2]
 
 
 do
@@ -132,9 +134,12 @@ end
 
 for each player do
 	if current_player.heard_vo == 0 then
-		send_incident(invasion_game_start, current_player, current_player)
-		send_incident(terr_game_start, current_player, current_player)
-		current_player.heard_vo = 1
+		current_player.vo_timer.set_rate(-100%)
+		if current_player.vo_timer.is_zero() then
+			send_incident(invasion_game_start, current_player, current_player)
+			send_incident(terr_game_start, current_player, current_player)
+			current_player.heard_vo = 1
+		end
 	end
 end
 
