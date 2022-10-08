@@ -1097,22 +1097,22 @@ for each player do
 	end
 end
 
---=== LOADOUT SYSTEM ===--
+--=== CLASS SYSTEM ===--
 
 enum class
     none
-    minor -- "Warrior". Tier 1 & 2. No special abilities.
-    spec_ops -- Tier 1, 2 & 3 Permenant camo, no shields.
-    major -- "Warden". Tier 2 & 3. Active ability that disables weapon overheat for self and nearby allies for a short time.
-    ultra -- "Champion". Tier 3. Berserks when sheild drops, giving them an energy sword and infinite sprint.
-    ranger -- Tier 3. Tag damanged enemies for a short time. Replaces minor.
-    zealot -- Tier 3. Extra shield and speed. Instant shield & health regen on assassination. Immune to operator's sonar frags.
-    guard -- Tier 1 & 2. No special abilities.
-    corpsman -- Tier 1, 2 & 3. Passive ability that increases damage resistance for nearby allies.
-    operator -- Tier 2 & 3. Grenade indicator and sonar frags.
-    grenadier -- Tier 3. Can hold 4 frags and they regenerate over time. Replaces guard
-    marksman -- Tier 3. Increased radar range
-    juggernaut -- Tier 3. Can deploy machine gun anywhere.
+    minor 
+    spec_ops 
+    major 
+    ultra 
+    ranger 
+    zealot 
+    guard 
+    corpsman 
+    operator 
+    grenadier 
+    marksman 
+    juggernaut 
 end
 
 function save_player_info()
