@@ -98,7 +98,6 @@ alias out_of_bounds = player.number[0]
 alias heard_vo = player.number[1]
 alias vo_timer = player.timer[2]
 
-
 do
 	global.timer[1].set_rate(-100%)
 	if global.timer[1] == 360 and global.number[8] == 0 then
@@ -1393,6 +1392,30 @@ if script_option[6] == 1 then
 			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) then
 				current_player.biped.remove_weapon(primary, false)
 				game.show_message_to(current_player, none, "Weapon prohibited")
+			end
+		end
+	end
+end
+
+-- Troop vehicles
+function triple_health()
+	temp_int = current_object.health
+	temp_int *= 3
+	current_object.health = temp_int
+end
+
+for each object with label "troop" do
+	current_object.set_spawn_location_permissions(allies)
+	if current_object.spawn_sequence = 1 then
+		triple_health()
+	end
+	if current_object.spawn_sequence = 2 then
+		triple_health()
+		temp_object = current_object
+		for each object do
+			temp_int = current_object.get_distance_to(temp_object)
+			if temp_int = 0 then
+				current_object.delete()
 			end
 		end
 	end
