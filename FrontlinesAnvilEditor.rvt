@@ -240,19 +240,25 @@ function trigger_0()for each object with label "scale" do
 end
 
 function frontlines_tools()
-    for each object with label "killzone" do
-        current_object.set_shape_visibility(everyone)
-        current_object.set_waypoint_visibility(everyone)
-        current_object.set_waypoint_icon(skull)
-        --current_object.set_waypoint_text("%n", current_object.spawn_sequence)
-        current_object.set_waypoint_priority(normal)
-    end
-    for each object with label "frontline" do
-        current_object.set_waypoint_visibility(everyone)
-        current_object.set_waypoint_icon(arrow)
-        --current_object.set_waypoint_text("%n", current_object.spawn_sequence)
-        current_object.set_waypoint_priority(normal)
-    end
+   for each object do
+      current_object.set_waypoint_visibility(no_one)
+   end
+   alias temp_number = global.number[2]
+   for each object with label "killzone" do
+      current_object.set_shape_visibility(everyone)
+      current_object.set_waypoint_visibility(everyone)
+      current_object.set_waypoint_icon(skull)
+      temp_number = current_object.spawn_sequence
+      current_object.set_waypoint_text("%n", temp_number)
+      current_object.set_waypoint_priority(normal)
+   end
+   for each object with label "frontline" do
+      current_object.set_waypoint_visibility(everyone)
+      current_object.set_waypoint_icon(arrow)
+      temp_number = current_object.spawn_sequence
+      current_object.set_waypoint_text("%n", temp_number)
+      current_object.set_waypoint_priority(normal)
+   end
 end
 
 on init: do
