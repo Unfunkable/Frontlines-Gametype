@@ -29,7 +29,7 @@ declare player.object[1] with network priority local
 declare player.object[2] with network priority local
 declare player.timer[0]
 declare player.timer[1]
-declare player.timer[2] = 2
+declare player.timer[2] = 4
 declare player.player[0] with network priority local
 declare player.number[0] with network priority low
 declare player.number[1] with network priority local
@@ -140,6 +140,7 @@ for each player do
 		if current_player.vo_timer.is_zero() then
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
+			game.show_message_to(current_player, none, "Frontlines 4.0 alpha 4 by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
@@ -233,6 +234,7 @@ function spartan_defense_success()
 	phase_objective = 1
 	if phase == max_territories then 
 		game.play_sound_for(all_players, inv_cue_spartan_win_2, true)
+		game.round_timer += 2
 	alt
 		game.play_sound_for(all_players, inv_cue_spartan_win_1, true)
 	end
@@ -279,6 +281,7 @@ function elite_defense_success()
 	phase_objective = 2
 	if phase == 1 then
 		game.play_sound_for(all_players, inv_cue_covenant_win_2, true)
+		game.round_timer += 2
 	alt
 		game.play_sound_for(all_players, inv_cue_covenant_win_1, true)
 	end
@@ -708,27 +711,6 @@ for each object with label "frontline" do
 			current_object.set_spawn_location_permissions(allies)
 		end
 	end
-	-- The following tries to set the default respawn point to the territory closest to the frontline.
-
-	-- for each player do
-	-- 	current_player.primary_spawn_object = no_object
-	-- 	temp_object = current_player.primary_spawn_object
-	-- 	temp_object2 = current_object.danger_zone
-	-- 	if current_object.spawn_sequence > temp_object.spawn_sequence and current_player.team == team[0] and temp_object2.blues == 0 then
-	-- 		current_player.primary_spawn_object = current_object
-	-- 	end
-	-- 	if current_object.spawn_sequence < temp_object.spawn_sequence and current_player.team == team[1] and temp_object2.reds == 0 then
-	-- 		current_player.primary_spawn_object = current_object
-	-- 	end
-	-- 	if current_object.team != current_player.team then
-	-- 		current_object.set_spawn_location_permissions(mod_player, current_player, 0)
-	-- 	end
-	-- end
-	-- for each player do
-	-- 	if current_object == current_player.primary_spawn_object then
-	-- 		current_player.set_primary_respawn_object(current_object)
-	-- 	end
-	-- end
 end
 
 --Set up primary respawn points for players.
@@ -1073,6 +1055,7 @@ if phase == max_territories or phase == 1 then
 			send_incident(bomb_disarmed, team[1], all_players)
 			explosive.delete()
 			global.object[0].disarm_timer.reset()
+			global.object[0].capture_timer.reset()
 		end
 		if global.object[0].timer[0].is_zero() then
 			send_incident(bomb_detonated, team[0], all_players)
@@ -1157,7 +1140,8 @@ enum class
     operator 
     grenadier 
     marksman 
-    juggernaut 
+    juggernaut
+	--general
 end
 
 function save_player_info()
@@ -1210,7 +1194,6 @@ for each player do
                 save_player_info()
                 temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
                 apply_player_info()
-                temp_object = temp_object2.place_between_me_and(temp_object2, hologram, 0)
                 current_player.plasma_grenades = 0
                 current_player.frag_grenades = 0
                 temp_object2.class = class.zealot
@@ -1226,9 +1209,22 @@ for each player do
 					current_player.plasma_grenades = 1
 					current_player.frag_grenades = 0
 					temp_object2.class = class.ultra
-					game.show_message_to(current_player, none, "Champion selected: Berserk when shields drop")
+					game.show_message_to(current_player, none, "Champion selected: Plasma LMG")
 				end
 			end
+			if temp_object.is_of_type(needle_rifle) then -- Royal zealot
+                save_player_info()
+                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
+                apply_player_info()
+                current_player.plasma_grenades = 0
+                current_player.frag_grenades = 0
+                temp_object2.class = class.royal_zealot
+				temp_object2.set_scale(120)
+				temp_object = current_player.try_get_weapon(primary)
+				if temp_object.is_of_type(needle_rifle) then
+					temp_object.tryhard_weapon = 1
+				end
+            end
             temp_object = current_player.try_get_armor_ability()
             if temp_object.is_of_type(active_camo_aa) then -- Spec ops
                 save_player_info()
@@ -1240,20 +1236,8 @@ for each player do
                 temp_object2.class = class.spec_ops
 				game.show_message_to(current_player, none, "Spec Ops selected: Permenant active camo, not visible while moving, no shields")
             end
-            if temp_object.is_of_type(jetpack) then -- Royal zealot
-                save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
-                apply_player_info()
-                -- temp_object = temp_object2.place_between_me_and(temp_object2, jetpack, 0)
-                current_player.plasma_grenades = 0
-                current_player.frag_grenades = 0
-                temp_object2.class = class.royal_zealot
-				temp_object = current_player.try_get_weapon(primary)
-				if temp_object.is_of_type(needle_rifle) then
-					temp_object.tryhard_weapon = 1
-				end
-            end
 			temp_object = current_player.biped
+			--Fallback class
 			if temp_object.class == class.none then
 				save_player_info()
 				temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, minor)
@@ -1297,19 +1281,32 @@ for each player do
 			end
 			if temp_object.is_of_type(hologram) then
 				temp_object2.class = class.operator
-				game.show_message_to(current_player, none, "Operator selected: Enemies always appear on radar")
+				game.show_message_to(current_player, none, "Operator selected: Faster movement speed")
+			end
+			--Fallback class
+			if temp_object2.class == class.none then
+				temp_object2.class = class.guard
 			end
 		end
     end
 	temp_object = current_player.biped
-    if temp_object.class == class.minor then
-        current_player.apply_traits(script_traits[0])
-    end
     if temp_object.class == class.major then
         current_player.apply_traits(script_traits[1])
         if current_player.ability_cooldown > 0 then
-            current_player.apply_traits(script_traits[9])
+            temp_object2 = current_player.try_get_armor_ability()
+			if temp_object2.is_of_type(drop_shield) then
+				temp_object2.delete()
+			end
         end
+		if current_player.ability_cooldown == 0 then
+			temp_object2 = current_player.try_get_armor_ability()
+			if not temp_object2.is_of_type(drop_shield) then
+				temp_object2 = current_player.try_get_vehicle()
+				if temp_object2 == no_object then
+					temp_object2 = current_player.biped.place_between_me_and(current_player.biped, drop_shield, 0)
+				end
+			end
+		end
         temp_object.set_shape(cylinder, 23, 23, 23)
         current_player.ability_cooldown.set_rate(-100%)
         temp_object2 = current_player.try_get_armor_ability()
@@ -1317,7 +1314,7 @@ for each player do
             temp_object2.delete()
             temp_object2 = current_player.biped.place_between_me_and(current_player.biped, drop_shield, 0)
             if current_player.ability_cooldown == 0 then
-                current_player.ability_timer = 7
+                current_player.ability_timer = 12
                 current_player.ability_timer.set_rate(-100%)
                 current_player.ability_cooldown = 30
             end
@@ -1342,7 +1339,7 @@ for each player do
 				end
 			end
             if temp_object.shape_contains(current_player.biped) and temp_player.ability_timer > 0 and current_player.team == temp_player.team then
-                if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object.is_of_type(plasma_repeater) then
+                if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object2.is_of_type(plasma_repeater) then
                     current_player.apply_traits(script_traits[7])
                 end
             end
@@ -1353,7 +1350,7 @@ for each player do
 		current_player.set_co_op_spawning(false)
     end
     if temp_object.class == class.ultra then
-        current_player.apply_traits(script_traits[3])
+		current_player.apply_traits(script_traits[3])
         temp_int = temp_object.shields
         temp_object2 = current_player.try_get_vehicle()
         if temp_int == 0 and temp_object2 == no_object then
@@ -1363,9 +1360,9 @@ for each player do
         if current_player.ability_timer > 0 then
             current_player.apply_traits(script_traits[8])
             temp_object = current_player.try_get_weapon(primary)
-            if not temp_object.is_of_type(concussion_rifle) then
+            if not temp_object.is_of_type(energy_sword) then
                 current_player.biped.remove_weapon(primary, false)
-                current_player.biped.add_weapon(concussion_rifle, force)
+                current_player.biped.add_weapon(energy_sword, force)
             end
             temp_object = current_player.try_get_armor_ability()
             if not temp_object.is_of_type(sprint) then
@@ -1378,7 +1375,7 @@ for each player do
         end
         if current_player.ability_timer == 0 then
             temp_object = current_player.try_get_weapon(primary)
-            if temp_object.is_of_type(concussion_rifle) then
+            if temp_object.is_of_type(energy_sword) then
                 temp_object.delete()
             end
             temp_object = current_player.try_get_armor_ability()
@@ -1393,7 +1390,7 @@ for each player do
     end
     if temp_object.class == class.zealot then
         current_player.apply_traits(script_traits[5])
-    end    
+    end
 	if temp_object.class == class.marksman then
         current_player.apply_traits(script_traits[6])
     end
@@ -1404,6 +1401,7 @@ for each player do
         temp_object.set_shape(cylinder, 23, 23, 23)
 		temp_player = current_player
 		temp_int = 0
+		current_player.apply_traits(script_traits[14])
         for each player do
             if temp_object.shape_contains(current_player.biped) and current_player.team == temp_player.team then
 				current_player.player[0] = temp_player
@@ -1423,7 +1421,43 @@ for each player do
     if temp_object.class == class.grenadier then
         current_player.apply_traits(script_traits[12])
     end  
+	if temp_object.class == class.guard then
+		current_player.apply_traits(script_traits[14])
+	end
+	if temp_object.class == class.juggernaut then
+		current_player.biped.set_scale(120)
+		temp_object2 = current_player.try_get_weapon(primary)
+		if temp_object2.is_of_type(detached_machine_gun_turret) then
+			current_player.apply_traits(script_traits[9])
+		end
+		if not temp_object2.is_of_type(detached_machine_gun_turret) then
+			current_player.apply_traits(script_traits[14])
+		end
+	end
 end
+
+--Reset berserk state on death.
+for each player do
+	if current_player.killer_type_is(guardians|suicide|kill|betrayal|quit) then
+		current_player.ability_timer = 0
+	end
+end
+
+--TODO: --Powerup (Finish for Frontlines 5.0. Spawn sequences should allow you to change between power weapons).
+-- for each object with label "powerup" do
+-- 	for each player do
+-- 		if current_player.is_elite() and current_object.shape_contains(current_player.biped) then
+-- 			current_object.delete()
+-- 			temp_object = current_player.biped
+-- 			temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, general)
+-- 			current_player.set_biped(temp_object2)
+-- 			temp_object.delete()
+-- 			temp_object = temp_object2.place_between_me_and(temp_object2, evade, 0)
+-- 			current_player.plasma_grenades = 2
+-- 			temp_object2.class = class.general
+-- 		end
+-- 	end
+-- end
 
 -- Anti-tryhard
 if script_option[6] == 1 then
@@ -1476,11 +1510,15 @@ for each object with label "troop" do
 	end
 end
 
--- I literally do not remember what I was doing here so it might bite me in the ass later
--- for each player do
--- 	if current_player.biped.is_of_type(spartan) then
--- 		current_player.object[2]
--- end
+-- Plasma Rifle buff
+for each player do
+	if script_option[8] == 1 then
+		temp_object = current_player.try_get_weapon(primary)
+		if temp_object.is_of_type(plasma_rifle) then
+			current_player.apply_traits(script_traits[0])
+		end
+	end
+end
 
 ---== ANVIL EDITOR ==---
 
