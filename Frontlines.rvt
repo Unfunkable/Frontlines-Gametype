@@ -193,21 +193,35 @@ function del_danger_zones()
 	end
 end
 
+function announce_defense_general()
+	game.play_sound_for(current_player, announce_defense, false)
+	current_player.set_round_card_title("Defense")
+end
+
+function announce_offense_terr_lost()
+	game.play_sound_for(current_player, announce_territories_lost, false)
+	game.play_sound_for(current_player, announce_offense, false)
+	current_player.set_round_card_text("Offense")
+	current_player.set_round_card_title("Territory lost!\r\nRegain the enemy territory.")
+end
+
+function announce_offense_defense_success()
+	game.play_sound_for(current_player, announce_offense, false)
+	current_player.set_round_card_text("Offense")
+	current_player.set_round_card_title("Defense successful!\r\nAttack the enemy territory.")
+end
+
 function spartan_attack_success()
 	reset_timers()
 	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_territories_captured, false)
-			game.play_sound_for(current_player, announce_defense, false)
-			current_player.set_round_card_text("Defense")
+			announce_defense_general()
 			current_player.set_round_card_title("Territory captured!\r\nPrepare for an enemy counter-attack.")
 		end
 		if current_player.team == team[1] then
-			game.play_sound_for(current_player, announce_territories_lost, false)
-			game.play_sound_for(current_player, announce_offense, false)
-			current_player.set_round_card_text("Offense")
-			current_player.set_round_card_title("Territory lost!\r\nRegain the enemy territory.")
+			announce_offense_terr_lost()
 		end
 	end
 	phase_objective = 2
@@ -221,13 +235,10 @@ function spartan_defense_success()
 	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
-			game.play_sound_for(current_player, announce_offense, false)
-			current_player.set_round_card_text("Offense")
-			current_player.set_round_card_title("Defense successful!\r\nAttack the enemy territory.")
+			announce_offense_defense_success()
 		end
 		if current_player.team == team[1] then
-			game.play_sound_for(current_player, announce_defense, false)
-			current_player.set_round_card_text("Defense")
+			announce_defense_general()
 			current_player.set_round_card_title("Attack failed!\r\nPrepare for an enemy counter-attack.")
 		end
 	end
@@ -246,15 +257,11 @@ function elite_attack_success()
 	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
-			game.play_sound_for(current_player, announce_territories_lost, false)
-			game.play_sound_for(current_player, announce_offense, false)
-			current_player.set_round_card_text("Offense")
-			current_player.set_round_card_title("Territory lost!\r\nRegain the enemy territory.")
+			announce_offense_terr_lost()
 		end
 		if current_player.team == team[1] then
 			game.play_sound_for(current_player, announce_territories_captured, false)
-			game.play_sound_for(current_player, announce_defense, false)
-			current_player.set_round_card_text("Defense")
+			announce_defense_general()
 			current_player.set_round_card_title("Territory captured!\r\nPrepare for an enemy counterattack.")
 		end
 	end
@@ -268,14 +275,11 @@ function elite_defense_success()
 	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
-			game.play_sound_for(current_player, announce_defense, false)
-			current_player.set_round_card_text("Defense")
+			announce_defense_general()
 			current_player.set_round_card_title("Attack failed!\r\nPrepare for an enemy counter-attack.")
 		end
 		if current_player.team == team[1] then
-			game.play_sound_for(current_player, announce_offense, false)
-			current_player.set_round_card_text("Offense")
-			current_player.set_round_card_title("Defense successful!\r\nAttack the enemy territory.")
+			announce_offense_defense_success()
 		end
 	end
 	phase_objective = 2
@@ -288,13 +292,17 @@ function elite_defense_success()
 	add_elite_lives()
 end	
 
+function prepare_game_over()
+	phase_objective = -1
+	game.round_timer.set_rate(0%)
+	music_timer.set_rate(-100%)
+end
+
 function spartan_victory()
 	temp_team = team[0]
 	send_incident(inv_spartan_win, all_players, all_players)
 	game.play_sound_for(all_players, inv_cue_spartan_win_big, true)
-	phase_objective = -1
-	game.round_timer.set_rate(0%)
-	music_timer.set_rate(-100%)
+	prepare_game_over()
 	team[1].score = 0
 end
 
@@ -302,9 +310,7 @@ function elite_victory()
 	temp_team = team[1]
 	send_incident(inv_elite_win, all_players, all_players)
 	game.play_sound_for(all_players, inv_cue_covenant_win_big, true)
-	phase_objective = -1
-	game.round_timer.set_rate(0%)
-	music_timer.set_rate(-100%)
+	prepare_game_over()
 	team[0].score = 0
 end
 
@@ -398,6 +404,30 @@ function positive_scaling_timers()
 		if temp_int >= 7 then
 			global.object[0].timer[0].set_rate(200%)
 		end
+	end
+end
+
+function team_check()
+	if current_player.team == team[0] then
+		temp_object.reds += 1
+	end
+	if current_player.team == team[1] then
+		temp_object.blues += 1
+	end
+end
+
+function check_danger_zone()
+	if current_object.team == team[0] and temp_object.blues <= 0 then
+		current_object.set_spawn_location_permissions(allies)
+	end
+	if current_object.team == team[0] and temp_object.blues > 0 then
+		current_object.set_spawn_location_permissions(no_one)
+	end
+	if current_object.team == team[1] and temp_object.reds <= 0 then
+		current_object.set_spawn_location_permissions(allies)
+	end
+	if current_object.team == team[1] and temp_object.reds > 0 then
+		current_object.set_spawn_location_permissions(no_one)
 	end
 end
 
@@ -659,34 +689,13 @@ for each object with label "frontline" do
 		temp_object.blues = 0
 		for each player do -- Counts the number of players from each side who are in the territory.
 			if global.object[0].shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					global.object[0].reds += 1
-				end
-				if current_player.team == team[1] then 
-					global.object[0].blues += 1
-				end
+				team_check()
 			end
 			if temp_object.shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					temp_object.reds += 1
-				end
-				if current_player.team == team[1] then
-					temp_object.blues += 1
-				end
+				team_check()
 			end
 			-- If the danger zone is clear of enemies they can spawn at the frontline, otherwise they can't
-			if current_object.team == team[0] and temp_object.blues <= 0 then
-				current_object.set_spawn_location_permissions(allies)
-			end
-			if current_object.team == team[0] and temp_object.blues > 0 then
-				current_object.set_spawn_location_permissions(no_one)
-			end
-			if current_object.team == team[1] and temp_object.reds <= 0 then
-				current_object.set_spawn_location_permissions(allies)
-			end
-			if current_object.team == team[1] and temp_object.reds > 0 then
-				current_object.set_spawn_location_permissions(no_one)
-			end
+			check_danger_zone()
 		end
 	end
 	if phase != current_object.spawn_sequence then
@@ -785,18 +794,7 @@ for each object with label "frontline_spawnpoint" do
 				end 
 			end
 		end -- If the danger zone is clear of enemies they can spawn at the frontline spawnpoints, otherwise they can't
-		if current_object.team == team[0] and temp_object.blues <= 0 then
-			current_object.set_spawn_location_permissions(allies)
-		end
-		if current_object.team == team[0] and temp_object.blues > 0 then
-			current_object.set_spawn_location_permissions(no_one)
-		end
-		if current_object.team == team[1] and temp_object.reds <= 0 then
-			current_object.set_spawn_location_permissions(allies)
-		end
-		if current_object.team == team[1] and temp_object.reds > 0 then
-			current_object.set_spawn_location_permissions(no_one)
-		end
+		check_danger_zone()
 	end
 	if script_option[7] == 0 then -- If "Spawn Locations" is set to "Current frontline and HQ"
 		temp_int = phase
@@ -1161,6 +1159,14 @@ function apply_player_info()
     current_player.add_weapon(current_player.object[1])
 end
 
+function place_zealot()
+	save_player_info()
+	temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
+	apply_player_info()
+	current_player.plasma_grenades = 0
+	current_player.frag_grenades = 0
+end
+
 -- Class detection
 for each player do
 	current_player.player[0] = no_player
@@ -1191,11 +1197,7 @@ for each player do
                 end
             end
             if temp_object.is_of_type(energy_sword) then -- Zealot
-                save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
-                apply_player_info()
-                current_player.plasma_grenades = 0
-                current_player.frag_grenades = 0
+                place_zealot()
                 temp_object2.class = class.zealot
 				game.show_message_to(current_player, none, "Zealot selected: 1.5x overshield and 1.2x speed")
             end
@@ -1213,11 +1215,7 @@ for each player do
 				end
 			end
 			if temp_object.is_of_type(needle_rifle) then -- Royal zealot
-                save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
-                apply_player_info()
-                current_player.plasma_grenades = 0
-                current_player.frag_grenades = 0
+                place_zealot()
                 temp_object2.class = class.royal_zealot
 				temp_object2.set_scale(120)
 				temp_object = current_player.try_get_weapon(primary)
@@ -1369,9 +1367,6 @@ for each player do
                 temp_object.delete()
                 temp_object = current_player.biped.place_between_me_and(current_player.biped, sprint, 0)
             end
-			if current_player.killer_type_is(guardians|suicide|kill|betrayal|quit) then
-				current_player.ability_timer = 0
-			end
         end
         if current_player.ability_timer == 0 then
             temp_object = current_player.try_get_weapon(primary)
