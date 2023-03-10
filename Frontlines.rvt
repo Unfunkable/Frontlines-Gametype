@@ -407,6 +407,15 @@ function positive_scaling_timers()
 	end
 end
 
+function team_check()
+	if current_player.team == team[0] then
+		temp_object.reds += 1
+	end
+	if current_player.team == team[1] then
+		temp_object.blues += 1
+	end
+end
+
 function check_danger_zone()
 	if current_object.team == team[0] and temp_object.blues <= 0 then
 		current_object.set_spawn_location_permissions(allies)
@@ -680,20 +689,10 @@ for each object with label "frontline" do
 		temp_object.blues = 0
 		for each player do -- Counts the number of players from each side who are in the territory.
 			if global.object[0].shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					global.object[0].reds += 1
-				end
-				if current_player.team == team[1] then
-					global.object[0].blues += 1
-				end
+				team_check()
 			end
 			if temp_object.shape_contains(current_player.biped) then
-				if current_player.team == team[0] then
-					temp_object.reds += 1
-				end
-				if current_player.team == team[1] then
-					temp_object.blues += 1
-				end
+				team_check()
 			end
 			-- If the danger zone is clear of enemies they can spawn at the frontline, otherwise they can't
 			check_danger_zone()
