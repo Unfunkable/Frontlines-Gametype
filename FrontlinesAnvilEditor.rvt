@@ -259,6 +259,36 @@ function frontlines_tools()
       current_object.set_waypoint_text("%n", temp_number)
       current_object.set_waypoint_priority(normal)
    end
+   for each object with label "s_lives" do
+      current_object.set_waypoint_visibility(everyone)
+      current_object.set_waypoint_icon(arrow)
+      temp_number = current_object.spawn_sequence
+      temp_number *= 10
+      current_object.set_waypoint_text("Lives: %n", temp_number)
+      current_object.set_waypoint_priority(normal)
+   end
+   for each object with label "s_lives_added" do
+      current_object.set_waypoint_visibility(everyone)
+      current_object.set_waypoint_icon(arrow)
+      temp_number = current_object.spawn_sequence
+      current_object.set_waypoint_text("Lives added: %n", temp_number)
+      current_object.set_waypoint_priority(normal)
+   end
+   for each object with label "s_first_attack" do
+      current_object.set_waypoint_visibility(everyone)
+      current_object.set_waypoint_icon(arrow)
+      temp_number = current_object.spawn_sequence
+      if temp_number == 0 then
+         current_object.set_waypoint_text("First Attack: Both", temp_number)
+      end
+      if temp_number == 1 then
+         current_object.set_waypoint_text("First Attack: Spartans", temp_number)
+      end
+      if temp_number == 2 then
+         current_object.set_waypoint_text("First Attack: Elites", temp_number)
+      end
+      current_object.set_waypoint_priority(normal)
+   end
 end
 
 on init: do
