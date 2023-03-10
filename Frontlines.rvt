@@ -245,7 +245,7 @@ function spartan_defense_success()
 	phase_objective = 1
 	if phase == max_territories then 
 		game.play_sound_for(all_players, inv_cue_spartan_win_2, true)
-		game.round_timer += 2
+		game.round_timer += 120
 	alt
 		game.play_sound_for(all_players, inv_cue_spartan_win_1, true)
 	end
