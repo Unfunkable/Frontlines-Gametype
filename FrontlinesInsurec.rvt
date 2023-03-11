@@ -184,21 +184,35 @@ function del_danger_zones()
 	end
 end
 
+function announce_defense_general()
+	game.play_sound_for(current_player, announce_defense, false)
+	current_player.set_round_card_title("Defense")
+end
+
+function announce_offense_terr_lost()
+	game.play_sound_for(current_player, announce_territories_lost, false)
+	game.play_sound_for(current_player, announce_offense, false)
+	current_player.set_round_card_text("Offense")
+	current_player.set_round_card_title("Territory lost!\r\nRegain the enemy territory.")
+end
+
+function announce_offense_defense_success()
+	game.play_sound_for(current_player, announce_offense, false)
+	current_player.set_round_card_text("Offense")
+	current_player.set_round_card_title("Defense successful!\r\nAttack the enemy territory.")
+end
+
 function spartan_attack_success()
 	reset_timers()
 	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
 			game.play_sound_for(current_player, announce_territories_captured, false)
-			game.play_sound_for(current_player, announce_defense, false)
-			current_player.set_round_card_text("Defense")
+			announce_defense_general()
 			current_player.set_round_card_title("Territory captured!\r\nPrepare for an enemy counter-attack.")
 		end
 		if current_player.team == team[1] then
-			game.play_sound_for(current_player, announce_territories_lost, false)
-			game.play_sound_for(current_player, announce_offense, false)
-			current_player.set_round_card_text("Offense")
-			current_player.set_round_card_title("Territory lost!\r\nRegain the enemy territory.")
+			announce_offense_terr_lost()
 		end
 	end
 	phase_objective = 2
@@ -212,20 +226,17 @@ function spartan_defense_success()
 	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
-			game.play_sound_for(current_player, announce_offense, false)
-			current_player.set_round_card_text("Offense")
-			current_player.set_round_card_title("Defense successful!\r\nAttack the enemy territory.")
+			announce_offense_defense_success()
 		end
 		if current_player.team == team[1] then
-			game.play_sound_for(current_player, announce_defense, false)
-			current_player.set_round_card_text("Defense")
+			announce_defense_general()
 			current_player.set_round_card_title("Attack failed!\r\nPrepare for an enemy counter-attack.")
 		end
 	end
 	phase_objective = 1
 	if phase == max_territories then 
 		game.play_sound_for(all_players, inv_cue_spartan_win_2, true)
-		game.round_timer += 2
+		game.round_timer += 120
 	alt
 		game.play_sound_for(all_players, inv_cue_spartan_win_1, true)
 	end
@@ -237,15 +248,11 @@ function elite_attack_success()
 	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
-			game.play_sound_for(current_player, announce_territories_lost, false)
-			game.play_sound_for(current_player, announce_offense, false)
-			current_player.set_round_card_text("Offense")
-			current_player.set_round_card_title("Territory lost!\r\nRegain the enemy territory.")
+			announce_offense_terr_lost()
 		end
 		if current_player.team == team[1] then
 			game.play_sound_for(current_player, announce_territories_captured, false)
-			game.play_sound_for(current_player, announce_defense, false)
-			current_player.set_round_card_text("Defense")
+			announce_defense_general()
 			current_player.set_round_card_title("Territory captured!\r\nPrepare for an enemy counterattack.")
 		end
 	end
@@ -259,40 +266,40 @@ function elite_defense_success()
 	del_danger_zones()
 	for each player do
 		if current_player.team == team[0] then
-			game.play_sound_for(current_player, announce_defense, false)
-			current_player.set_round_card_text("Defense")
+			announce_defense_general()
 			current_player.set_round_card_title("Attack failed!\r\nPrepare for an enemy counter-attack.")
 		end
 		if current_player.team == team[1] then
-			game.play_sound_for(current_player, announce_offense, false)
-			current_player.set_round_card_text("Offense")
-			current_player.set_round_card_title("Defense successful!\r\nAttack the enemy territory.")
+			announce_offense_defense_success()
 		end
 	end
 	phase_objective = 2
 	if phase == 1 then
 		game.play_sound_for(all_players, inv_cue_covenant_win_2, true)
+		game.round_timer += 120
 	alt
 		game.play_sound_for(all_players, inv_cue_covenant_win_1, true)
 	end
 	add_elite_lives()
 end	
 
-function spartan_victory()
-	temp_team = team[0]
-	game.play_sound_for(all_players, inv_cue_spartan_win_big, true)
+function prepare_game_over()
 	phase_objective = -1
 	game.round_timer.set_rate(0%)
 	music_timer.set_rate(-100%)
+end
+
+function spartan_victory()
+	temp_team = team[0]
+	game.play_sound_for(all_players, inv_cue_spartan_win_big, true)
+	prepare_game_over()
 	team[1].score = 0
 end
 
 function elite_victory()
 	temp_team = team[1]
 	game.play_sound_for(all_players, inv_cue_covenant_win_big, true)
-	phase_objective = -1
-	game.round_timer.set_rate(0%)
-	music_timer.set_rate(-100%)
+	prepare_game_over()
 	team[0].score = 0
 end
 
@@ -386,6 +393,21 @@ function positive_scaling_timers()
 		if temp_int >= 7 then
 			global.object[0].timer[0].set_rate(200%)
 		end
+	end
+end
+
+function check_danger_zone()
+	if current_object.team == team[0] and temp_object.blues <= 0 then
+		current_object.set_spawn_location_permissions(allies)
+	end
+	if current_object.team == team[0] and temp_object.blues > 0 then
+		current_object.set_spawn_location_permissions(no_one)
+	end
+	if current_object.team == team[1] and temp_object.reds <= 0 then
+		current_object.set_spawn_location_permissions(allies)
+	end
+	if current_object.team == team[1] and temp_object.reds > 0 then
+		current_object.set_spawn_location_permissions(no_one)
 	end
 end
 
@@ -634,7 +656,7 @@ for each object with label "frontline" do
 				if current_player.team == team[0] then
 					global.object[0].reds += 1
 				end
-				if current_player.team == team[1] then 
+				if current_player.team == team[1] then
 					global.object[0].blues += 1
 				end
 			end
@@ -647,18 +669,7 @@ for each object with label "frontline" do
 				end
 			end
 			-- If the danger zone is clear of enemies they can spawn at the frontline, otherwise they can't
-			if current_object.team == team[0] and temp_object.blues <= 0 then
-				current_object.set_spawn_location_permissions(allies)
-			end
-			if current_object.team == team[0] and temp_object.blues > 0 then
-				current_object.set_spawn_location_permissions(no_one)
-			end
-			if current_object.team == team[1] and temp_object.reds <= 0 then
-				current_object.set_spawn_location_permissions(allies)
-			end
-			if current_object.team == team[1] and temp_object.reds > 0 then
-				current_object.set_spawn_location_permissions(no_one)
-			end
+			check_danger_zone()
 		end
 	end
 	if phase != current_object.spawn_sequence then
@@ -757,18 +768,7 @@ for each object with label "frontline_spawnpoint" do
 				end 
 			end
 		end -- If the danger zone is clear of enemies they can spawn at the frontline spawnpoints, otherwise they can't
-		if current_object.team == team[0] and temp_object.blues <= 0 then
-			current_object.set_spawn_location_permissions(allies)
-		end
-		if current_object.team == team[0] and temp_object.blues > 0 then
-			current_object.set_spawn_location_permissions(no_one)
-		end
-		if current_object.team == team[1] and temp_object.reds <= 0 then
-			current_object.set_spawn_location_permissions(allies)
-		end
-		if current_object.team == team[1] and temp_object.reds > 0 then
-			current_object.set_spawn_location_permissions(no_one)
-		end
+		check_danger_zone()
 	end
 	if script_option[7] == 0 then -- If "Spawn Locations" is set to "Current frontline and HQ"
 		temp_int = phase
@@ -1246,9 +1246,6 @@ for each player do
 		end
     end
 	temp_object = current_player.biped
-    if temp_object.class == class.minor then
-        current_player.apply_traits(script_traits[0])
-    end
     if temp_object.class == class.major then
         current_player.apply_traits(script_traits[1])
         if current_player.ability_cooldown > 0 then
@@ -1294,6 +1291,7 @@ for each player do
     end
     if temp_object.class == class.spec_ops then
         current_player.apply_traits(script_traits[2])
+		current_player.set_co_op_spawning(false)
     end
     if temp_object.class == class.ultra then
         current_player.apply_traits(script_traits[3])
@@ -1347,6 +1345,7 @@ for each player do
         temp_object.set_shape(cylinder, 23, 23, 23)
 		temp_player = current_player
 		temp_int = 0
+		current_player.apply_traits(script_traits[14])
         for each player do
             if temp_object.shape_contains(current_player.biped) and current_player.team == temp_player.team then
 				current_player.player[0] = temp_player
@@ -1366,6 +1365,19 @@ for each player do
     if temp_object.class == class.grenadier then
         current_player.apply_traits(script_traits[12])
     end  
+	if temp_object.class == class.guard then
+		current_player.apply_traits(script_traits[14])
+	end
+	if temp_object.class == class.juggernaut then
+		current_player.biped.set_scale(120)
+		temp_object2 = current_player.try_get_weapon(primary)
+		if temp_object2.is_of_type(detached_machine_gun_turret) then
+			current_player.apply_traits(script_traits[9])
+		end
+		if not temp_object2.is_of_type(detached_machine_gun_turret) then
+			current_player.apply_traits(script_traits[14])
+		end
+	end
 end
 
 -- Anti-tryhard
@@ -1419,11 +1431,15 @@ for each object with label "troop" do
 	end
 end
 
--- I literally do not remember what I was doing here so it might bite me in the ass later
--- for each player do
--- 	if current_player.biped.is_of_type(spartan) then
--- 		current_player.object[2]
--- end
+-- Plasma Rifle buff
+for each player do
+	if script_option[8] == 1 then
+		temp_object = current_player.try_get_weapon(primary)
+		if temp_object.is_of_type(plasma_rifle) then
+			current_player.apply_traits(script_traits[0])
+		end
+	end
+end
 
 ---== ANVIL EDITOR ==---
 
@@ -1681,4 +1697,23 @@ end
     for each object with label "spawner" do
 		anvil_trigger2()
     end
+	-- Ability widgets
+	for each player do
+		if current_player.ability_timer == 0 then
+			script_widget[0].set_visibility(current_player, false)
+			script_widget[1].set_visibility(current_player, false)
+		end
+		temp_object = current_player.biped
+		if temp_object.class == class.major and current_player.ability_timer > 0 then
+			script_widget[0].set_visibility(current_player, true)
+			script_widget[0].set_text("OVERCHARGE %n\r\nWeapons won't overheat", hud_player.ability_timer)
+		end
+		if temp_object.class == class.ultra and current_player.ability_timer > 0 then
+			script_widget[1].set_visibility(current_player, true)
+			script_widget[1].set_text("BERSERK %n", hud_player.ability_timer)
+		end
+		if current_player.player[0] == no_player then
+			script_widget[2].set_visibility(current_player, false)
+		end
+	end
  end
