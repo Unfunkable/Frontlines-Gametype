@@ -285,7 +285,7 @@ function elite_defense_success()
 	phase_objective = 2
 	if phase == 1 then
 		game.play_sound_for(all_players, inv_cue_covenant_win_2, true)
-		game.round_timer += 2
+		game.round_timer += 120
 	alt
 		game.play_sound_for(all_players, inv_cue_covenant_win_1, true)
 	end
