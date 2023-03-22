@@ -1151,77 +1151,7 @@ end
 -- Class detection
 for each player do
 	current_player.player[0] = no_player
-    if current_player.is_elite() and current_player.biped != no_object then
-        temp_object = current_player.biped
-        if temp_object.class == class.none then
-            temp_object = current_player.try_get_weapon(primary)
-            if temp_object.is_of_type(plasma_rifle) then -- Check if they're an elite minor or major
-                temp_object = current_player.try_get_armor_ability()
-                if temp_object.is_of_type(evade) then -- minor
-                    save_player_info()
-                    temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, minor)
-                    apply_player_info()
-                    temp_object = temp_object2.place_between_me_and(temp_object2, evade, 0)
-                    current_player.plasma_grenades = 1
-                    current_player.frag_grenades = 0
-                    temp_object2.class = class.minor
-                end
-                if temp_object.is_of_type(drop_shield) then -- major
-                    save_player_info()
-                    temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, officer)
-                    apply_player_info()
-                    temp_object = temp_object2.place_between_me_and(temp_object2, drop_shield, 0)
-                    current_player.plasma_grenades = 1
-                    current_player.frag_grenades = 0
-                    temp_object2.class = class.major
-					game.show_message_to(current_player, none, "Warden selected: Use armor ability to active Overcharge and prevent weapon overheat.")
-                end
-            end
-            if temp_object.is_of_type(energy_sword) then -- Zealot
-                save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
-                apply_player_info()
-                current_player.plasma_grenades = 0
-                current_player.frag_grenades = 0
-                temp_object2.class = class.zealot
-				game.show_message_to(current_player, none, "Zealot selected: 1.5x overshield and 1.2x speed")
-            end
-			if temp_object.is_of_type(plasma_repeater) then -- Ultra
-				temp_object = current_player.try_get_armor_ability()
-				if temp_object.is_of_type(evade) or temp_object.is_of_type(drop_shield) then
-					save_player_info()
-					temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, ultra)
-					apply_player_info()
-					temp_object = temp_object2.place_between_me_and(temp_object2, drop_shield, 0)
-					current_player.plasma_grenades = 1
-					current_player.frag_grenades = 0
-					temp_object2.class = class.ultra
-					game.show_message_to(current_player, none, "Champion selected: Plasma LMG")
-				end
-			end
-            temp_object = current_player.try_get_armor_ability()
-            if temp_object.is_of_type(active_camo_aa) then -- Spec ops
-                save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, spec_ops)
-                apply_player_info()
-                temp_object = temp_object2.place_between_me_and(temp_object2, active_camo_aa, 0)
-                current_player.plasma_grenades = 1
-                current_player.frag_grenades = 0
-                temp_object2.class = class.spec_ops
-				game.show_message_to(current_player, none, "Spec Ops selected: Permenant active camo, not visible while moving, no shields")
-            end
-            if temp_object.is_of_type(jetpack) then -- Royal zealot
-                save_player_info()
-                temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, zealot)
-                apply_player_info()
-                -- temp_object = temp_object2.place_between_me_and(temp_object2, jetpack, 0)
-                current_player.plasma_grenades = 0
-                current_player.frag_grenades = 0
-                temp_object2.class = class.royal_zealot
-            end
-        end
-    end
-    if current_player.is_spartan() and current_player.biped != no_object then
+    if current_player.biped != no_object then
 		temp_object2 = current_player.biped
 		if temp_object2.class == class.none then
 			temp_object = current_player.try_get_weapon(primary)
@@ -1262,95 +1192,6 @@ for each player do
 		end
     end
 	temp_object = current_player.biped
-    if temp_object.class == class.major then
-        current_player.apply_traits(elite_major_traits)
-        if current_player.ability_cooldown > 0 then
-            current_player.apply_traits(script_traits[9])
-        end
-        temp_object.set_shape(cylinder, 23, 23, 23)
-        current_player.ability_cooldown.set_rate(-100%)
-        temp_object2 = current_player.try_get_armor_ability()
-        if temp_object2.is_in_use() then
-            temp_object2.delete()
-            temp_object2 = current_player.biped.place_between_me_and(current_player.biped, drop_shield, 0)
-            if current_player.ability_cooldown == 0 then
-                current_player.ability_timer = 7
-                current_player.ability_timer.set_rate(-100%)
-                current_player.ability_cooldown = 30
-            end
-        end
-        temp_object2 = current_player.try_get_weapon(primary)
-        if current_player.ability_timer > 0 then
-            if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object.is_of_type(plasma_repeater) then
-                current_player.apply_traits(ability_overcharge_traits)
-            end
-        end
-        if current_player.ability_timer == 0 then
-            temp_object.set_shape_visibility(no_one)
-        end
-        temp_player = current_player
-        for each player do
-            temp_object2 = current_player.try_get_weapon(primary)
-			if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object.is_of_type(plasma_repeater) or current_player == temp_player then
-				if temp_player.ability_timer > 0 and current_player.team == temp_player.team then
-					temp_object.set_shape_visibility(mod_player, current_player, 1)
-				alt
-					temp_object.set_shape_visibility(mod_player, current_player, 0)
-				end
-			end
-            if temp_object.shape_contains(current_player.biped) and temp_player.ability_timer > 0 and current_player.team == temp_player.team then
-                if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object2.is_of_type(plasma_repeater) then
-                    current_player.apply_traits(ability_overcharge_traits)
-                end
-            end
-        end
-    end
-    if temp_object.class == class.spec_ops then
-        current_player.apply_traits(elite_spec_ops_traits)
-		current_player.set_co_op_spawning(false)
-    end
-    if temp_object.class == class.ultra then
-		current_player.apply_traits(elite_ultra_traits)
-        temp_int = temp_object.shields
-        temp_object2 = current_player.try_get_vehicle()
-        if temp_int == 0 and temp_object2 == no_object then
-            current_player.ability_timer = 10
-            current_player.ability_timer.set_rate(-100%)
-        end
-        if current_player.ability_timer > 0 then
-            current_player.apply_traits(ability_berserk_traits)
-            temp_object = current_player.try_get_weapon(primary)
-            if not temp_object.is_of_type(energy_sword) then
-                current_player.biped.remove_weapon(primary, false)
-                current_player.biped.add_weapon(energy_sword, force)
-            end
-            temp_object = current_player.try_get_armor_ability()
-            if not temp_object.is_of_type(sprint) then
-                temp_object.delete()
-                temp_object = current_player.biped.place_between_me_and(current_player.biped, sprint, 0)
-            end
-			if current_player.killer_type_is(guardians|suicide|kill|betrayal|quit) then
-				current_player.ability_timer = 0
-			end
-        end
-        if current_player.ability_timer == 0 then
-            temp_object = current_player.try_get_weapon(primary)
-            if temp_object.is_of_type(energy_sword) then
-                temp_object.delete()
-            end
-            temp_object = current_player.try_get_armor_ability()
-            if temp_object.is_of_type(sprint) then
-                temp_object.delete()
-                temp_object = current_player.biped.place_between_me_and(current_player.biped, drop_shield, 0)
-            end
-        end
-    end
-    if temp_object.class == class.royal_zealot then
-        current_player.apply_traits(elite_royal_traits)
-    end
-    if temp_object.class == class.zealot then
-        current_player.apply_traits(elite_zealot_traits)
-    end
 	if temp_object.class == class.marksman then
         current_player.apply_traits(spartan_marksman_traits)
     end
@@ -1403,20 +1244,6 @@ if script_option[6] == 1 then
 		if temp_object.class != class.marksman then
 			for each object do
 				if current_object.is_of_type(dmr) and current_object.tryhard_weapon == 1 then
-					current_object.set_pickup_permissions(mod_player, current_player, 0)
-				end
-			end
-		end
-		if temp_object.class != class.royal_zealot then
-			for each object do
-				if current_object.is_of_type(needle_rifle) and current_object.tryhard_weapon == 1 then
-					current_object.set_pickup_permissions(mod_player, current_player, 0)
-				end
-			end
-		end
-		if temp_object.class != class.zealot then
-			for each object do
-				if current_object.is_of_type(energy_sword) then
 					current_object.set_pickup_permissions(mod_player, current_player, 0)
 				end
 			end
