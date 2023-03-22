@@ -65,6 +65,23 @@ alias out_of_bounds = player.number[0]
 alias heard_vo = player.number[1]
 alias vo_timer = player.timer[2]
 
+--Script traits
+alias 150_damage_traits = script_traits[0]
+alias elite_major_traits = script_traits[1]
+alias elite_spec_ops_traits = script_traits[2]
+alias elite_ultra_traits = script_traits[3]
+alias elite_royal_traits = script_traits[4]
+alias elite_zealot_traits = script_traits[5]
+alias spartan_marksman_traits = script_traits[6]
+alias ability_overcharge_traits = script_traits[7]
+alias ability_berserk_traits = script_traits[8]
+alias spartan_juggernaut_traits = script_traits[9]
+alias spartan_operator_traits = script_traits[10]
+alias ability_fortify_traits = script_traits[11]
+alias spartan_grenadier_traits = script_traits[12]
+alias 200_damage_traits = script_traits[13]
+alias spartan_green_traits = script_traits[14]
+
 --== ANVIL EDITOR VARIABLES ==--
 declare global.number[9] with network priority low
 declare global.number[10] with network priority low
@@ -291,7 +308,7 @@ function elite_defense_success()
 	phase_objective = 2
 	if phase == 1 then
 		game.play_sound_for(all_players, inv_cue_covenant_win_2, true)
-		game.round_timer += 2
+		game.round_timer += 120
 	alt
 		game.play_sound_for(all_players, inv_cue_covenant_win_1, true)
 	end
@@ -1088,7 +1105,7 @@ for each player do
 	temp_object = current_player.try_get_vehicle()
 	temp_object2 = current_player.try_get_weapon(primary)
 	if temp_object.has_forge_label("damage_boost") or temp_object2.has_forge_label("damage_boost") then
-		current_player.apply_traits(script_traits[13])
+		current_player.apply_traits(200_damage_traits)
 	end	
 end
 
@@ -1258,7 +1275,7 @@ for each player do
     end
 	temp_object = current_player.biped
     if temp_object.class == class.major then
-        current_player.apply_traits(script_traits[1])
+        current_player.apply_traits(elite_major_traits)
         if current_player.ability_cooldown > 0 then
             temp_object2 = current_player.try_get_armor_ability()
 			if temp_object2.is_of_type(drop_shield) then
@@ -1289,7 +1306,7 @@ for each player do
         temp_object2 = current_player.try_get_weapon(primary)
         if current_player.ability_timer > 0 then
             if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object.is_of_type(plasma_repeater) then
-                current_player.apply_traits(script_traits[7])
+                current_player.apply_traits(ability_overcharge_traits)
             end
         end
         if current_player.ability_timer == 0 then
@@ -1307,17 +1324,17 @@ for each player do
 			end
             if temp_object.shape_contains(current_player.biped) and temp_player.ability_timer > 0 and current_player.team == temp_player.team then
                 if temp_object2.is_of_type(plasma_rifle) or temp_object2.is_of_type(plasma_pistol) or temp_object2.is_of_type(detached_plasma_cannon) or temp_object2.is_of_type(plasma_repeater) then
-                    current_player.apply_traits(script_traits[7])
+                    current_player.apply_traits(ability_overcharge_traits)
                 end
             end
         end
     end
     if temp_object.class == class.spec_ops then
-        current_player.apply_traits(script_traits[2])
+        current_player.apply_traits(elite_spec_ops_traits)
 		current_player.set_co_op_spawning(false)
     end
     if temp_object.class == class.ultra then
-		current_player.apply_traits(script_traits[3])
+		current_player.apply_traits(elite_ultra_traits)
         temp_int = temp_object.shields
         temp_object2 = current_player.try_get_vehicle()
         if temp_int == 0 and temp_object2 == no_object then
@@ -1325,7 +1342,7 @@ for each player do
             current_player.ability_timer.set_rate(-100%)
         end
         if current_player.ability_timer > 0 then
-            current_player.apply_traits(script_traits[8])
+            current_player.apply_traits(ability_berserk_traits)
             temp_object = current_player.try_get_weapon(primary)
             if not temp_object.is_of_type(energy_sword) then
                 current_player.biped.remove_weapon(primary, false)
@@ -1350,26 +1367,26 @@ for each player do
         end
     end
     if temp_object.class == class.royal_zealot then
-        current_player.apply_traits(script_traits[4])
+        current_player.apply_traits(elite_royal_traits)
     end
     if temp_object.class == class.zealot then
-        current_player.apply_traits(script_traits[5])
+        current_player.apply_traits(elite_zealot_traits)
     end
 	if temp_object.class == class.marksman then
-        current_player.apply_traits(script_traits[6])
+        current_player.apply_traits(spartan_marksman_traits)
     end
     if temp_object.class == class.operator then
-        current_player.apply_traits(script_traits[10])
+        current_player.apply_traits(spartan_operator_traits)
     end
     if temp_object.class == class.corpsman then
         temp_object.set_shape(cylinder, 23, 23, 23)
 		temp_player = current_player
 		temp_int = 0
-		current_player.apply_traits(script_traits[14])
+		current_player.apply_traits(spartan_green_traits)
         for each player do
             if temp_object.shape_contains(current_player.biped) and current_player.team == temp_player.team then
 				current_player.player[0] = temp_player
-                current_player.apply_traits(script_traits[11])
+                current_player.apply_traits(ability_fortify_traits)
 				script_widget[2].set_visibility(current_player, true)
 				script_widget[2].set_text("Fortified\r\n+10%% Damage resistance and \r\nfaster shield recharge", hud_player.player[0])
 				if current_player != temp_player then
@@ -1383,19 +1400,19 @@ for each player do
 		-- end
     end
     if temp_object.class == class.grenadier then
-        current_player.apply_traits(script_traits[12])
+        current_player.apply_traits(spartan_grenadier_traits)
     end  
 	if temp_object.class == class.guard then
-		current_player.apply_traits(script_traits[14])
+		current_player.apply_traits(spartan_green_traits)
 	end
 	if temp_object.class == class.juggernaut then
 		current_player.biped.set_scale(120)
 		temp_object2 = current_player.try_get_weapon(primary)
 		if temp_object2.is_of_type(detached_machine_gun_turret) then
-			current_player.apply_traits(script_traits[9])
+			current_player.apply_traits(spartan_juggernaut_traits)
 		end
 		if not temp_object2.is_of_type(detached_machine_gun_turret) then
-			current_player.apply_traits(script_traits[14])
+			current_player.apply_traits(spartan_green_traits)
 		end
 	end
 end
@@ -1479,7 +1496,7 @@ for each player do
 	if script_option[8] == 1 then
 		temp_object = current_player.try_get_weapon(primary)
 		if temp_object.is_of_type(plasma_rifle) then
-			current_player.apply_traits(script_traits[0])
+			current_player.apply_traits(150_damage_traits)
 		end
 	end
 end
