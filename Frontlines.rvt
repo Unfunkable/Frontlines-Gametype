@@ -1,3 +1,8 @@
+----------------------------
+-- FRONTLINES 4.0 ALPHA 4 --
+-- 		by CantFunkUp	  --
+----------------------------
+
 --== FRONTLINES VARIABLES ==--
 declare global.number[0] with network priority high
 declare global.number[1] with network priority low
