@@ -1130,7 +1130,7 @@ for each player do
 					current_player.plasma_grenades = 1
 					current_player.frag_grenades = 0
 					temp_object2.class = class.ultra
-					game.show_message_to(current_player, none, "Champion selected: Plasma LMG")
+					game.show_message_to(current_player, none, "Champion selected: Berserk when sheilds drop")
 				end
 			end
 			if temp_object.is_of_type(needle_rifle) then -- Royal zealot
