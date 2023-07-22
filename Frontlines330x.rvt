@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 4.0 ALPHA 4 --
+-- FRONTLINES 4.0 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -129,7 +129,7 @@ for each player do
 		if current_player.vo_timer.is_zero() then
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
-			game.show_message_to(current_player, none, "Frontlines 4.0 alpha 4 by CantFunkUp")
+			game.show_message_to(current_player, none, "Frontlines 4.0 release by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
