@@ -1275,7 +1275,6 @@ for each player do
             current_player.ability_timer.set_rate(-100%)
         end
         if current_player.ability_timer > 0 then
-            current_player.apply_traits(ability_berserk_traits)
             temp_object = current_player.try_get_weapon(primary)
             if not temp_object.is_of_type(energy_sword) then
                 current_player.biped.remove_weapon(primary, false)
@@ -1286,6 +1285,9 @@ for each player do
                 temp_object.delete()
                 temp_object = current_player.biped.place_between_me_and(current_player.biped, sprint, 0)
             end
+			if temp_object.is_of_type(sprint) then
+				current_player.apply_traits(ability_berserk_traits)
+			end
         end
         if current_player.ability_timer == 0 then
             temp_object = current_player.try_get_weapon(primary)
