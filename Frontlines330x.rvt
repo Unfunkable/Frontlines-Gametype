@@ -1117,6 +1117,7 @@ for each player do
             end
             if temp_object.is_of_type(energy_sword) then -- Zealot
                 place_zealot()
+				temp_object = temp_object2.place_between_me_and(temp_object2, sprint, 0)
                 temp_object2.class = class.zealot
 				game.show_message_to(current_player, none, "Zealot selected: 1.5x overshield and 1.2x speed")
             end
