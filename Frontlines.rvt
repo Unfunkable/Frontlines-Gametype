@@ -1412,7 +1412,7 @@ if script_option[6] == 1 then
 			if temp_object.is_of_type(energy_sword) then
 				current_player.object[0] = temp_object
 			end
-			if not temp_object2.is_of_type(energy_sword) or not temp_object2.is_of_type(bomb) then
+			if not temp_object2.is_of_type(energy_sword) and not temp_object2.is_of_type(bomb) then
 				current_player.biped.remove_weapon(primary, false)
 				game.show_message_to(current_player, none, "Weapon prohibited")
 				current_player.add_weapon(current_player.object[0])
