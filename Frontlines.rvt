@@ -1286,6 +1286,10 @@ for each player do
             temp_object = current_player.try_get_weapon(primary)
             if temp_object.is_of_type(energy_sword) then
                 temp_object.delete()
+				temp_object = current_player.try_get_weapon(primary)
+				if temp_object == no_object then
+					current_player.biped.add_weapon(plasma_repeater, force)
+				end
             end
         end
     end
