@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 4.2 RELEASE --
+-- FRONTLINES 4.3 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -129,7 +129,7 @@ for each player do
 		if current_player.vo_timer.is_zero() then
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
-			game.show_message_to(current_player, none, "Frontlines 4.2 release by CantFunkUp")
+			game.show_message_to(current_player, none, "Frontlines 4.3 release by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
@@ -1224,7 +1224,7 @@ for each player do
 				end
 			end
 		end
-        temp_object.set_shape(cylinder, 23, 23, 23)
+        temp_object.set_shape(cylinder, 33, 23, 23)
         current_player.ability_cooldown.set_rate(-100%)
         temp_object2 = current_player.try_get_armor_ability()
         if temp_object2.is_in_use() then
@@ -1235,6 +1235,13 @@ for each player do
                 current_player.ability_timer.set_rate(-100%)
                 current_player.ability_cooldown = 30
             end
+			temp_object2 = current_player.biped
+			for each player do
+				if temp_object2.shape_contains(current_player.biped) then
+					current_player.plasma_grenades += 1
+					game.show_message_to(current_player, none, "+1 plasma grenade from Overcharge")
+				end
+			end
         end
         temp_object2 = current_player.try_get_weapon(primary)
         if current_player.ability_timer > 0 then
@@ -1395,9 +1402,34 @@ if script_option[6] == 1 then
 		temp_object = current_player.biped
 		temp_object2 = current_player.try_get_weapon(primary)
 		if temp_object.class == class.marksman and temp_object2 != no_object then
-			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) then
+			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) or not temp_object2.is_of_type(bomb) then
 				current_player.biped.remove_weapon(primary, false)
 				game.show_message_to(current_player, none, "Weapon prohibited")
+			end
+		end
+		if temp_object.class == class.zealot and temp_object2 != no_object then
+			if temp_object.is_of_type(energy_sword) then
+				current_player.object[0] = temp_object
+			end
+			if not temp_object2.is_of_type(energy_sword) or not temp_object2.is_of_type(bomb) then
+				current_player.biped.remove_weapon(primary, false)
+				game.show_message_to(current_player, none, "Weapon prohibited")
+				current_player.add_weapon(current_player.object[0])
+			end
+		end
+		-- Prevent elites from picking up human weapons
+		if current_player.is_elite() then
+			if temp_object2.is_of_type(dmr) or
+			temp_object2.is_of_type(assault_rifle) or
+			temp_object2.is_of_type(magnum) or
+			temp_object2.is_of_type(rocket_launcher) or
+			temp_object2.is_of_type(shotgun) or
+			temp_object2.is_of_type(sniper_rifle) or
+			temp_object2.is_of_type(grenade_launcher) or
+			temp_object2.is_of_type(spartan_laser) or
+			temp_object2.is_of_type(detached_machine_gun_turret) then
+				temp_object.detach()
+				game.show_message_to(current_player, none, "Even as trophies, these weapons are worthless!")
 			end
 		end
 	end
