@@ -1456,7 +1456,7 @@ for each player do
 	if script_option[8] == 1 then
 		temp_object = current_player.try_get_weapon(primary)
 		if temp_object.is_of_type(plasma_rifle) then
-			current_player.apply_traits(alpha_damage_traits)
+			current_player.apply_traits(bravo_damage_traits)
 		end
 	end
 end
