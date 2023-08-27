@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 4.3 RELEASE --
+-- FRONTLINES 4.4 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -129,7 +129,8 @@ for each player do
 		if current_player.vo_timer.is_zero() then
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
-			game.show_message_to(current_player, none, "Frontlines 4.3 release by CantFunkUp")
+			game.show_message_to(current_player, none, "Join MCC gametypers: https://discord.gg/FRbyECajYm")
+			game.show_message_to(current_player, none, "Frontlines 4.4 release by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
@@ -434,12 +435,11 @@ do
 			for each player do
 				if current_player.team == team[0] then 
 					current_player.set_round_card_text("Spartan")
-					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
 				if current_player.team == team[1] then 
 					current_player.set_round_card_text("Elite")
-					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
+				current_player.set_round_card_title("Capture territories to advance the frontline.\r\nJoin MCC Gametypers: https://discord.gg/FRbyECajYm")
 			end
 		end 
 		for each object with label "frontline" do 
@@ -1036,9 +1036,12 @@ end
 for each player do
 	temp_object = current_player.try_get_vehicle()
 	temp_object2 = current_player.try_get_weapon(primary)
-	if temp_object.has_forge_label("damage_boost") or temp_object2.has_forge_label("damage_boost") then
+	if temp_object.has_forge_label("bravo_damage") or temp_object2.has_forge_label("bravo_damage") then
 		current_player.apply_traits(bravo_damage_traits)
 	end	
+	if temp_object.has_forge_label("alpha_damage") or temp_object2.has_forge_label("alpha_damage") then
+		current_player.apply_traits(alpha_damage_traits)
+	end
 end
 
 --=== CLASS SYSTEM ===--
