@@ -1042,6 +1042,16 @@ for each player do
 	if temp_object.has_forge_label("alpha_damage") or temp_object2.has_forge_label("alpha_damage") then
 		current_player.apply_traits(alpha_damage_traits)
 	end
+	for each object with label "alpha_damage" do
+		if current_object.shape_contains(current_player.biped) then
+			current_player.apply_traits(alpha_damage_traits)
+		end
+	end
+	for each object with label "bravo_damage" do
+		if current_object.shape_contains(current_player.biped) then
+			current_player.apply_traits(bravo_damage_traits)
+		end
+	end
 end
 
 --=== CLASS SYSTEM ===--
