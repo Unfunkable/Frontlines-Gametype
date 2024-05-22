@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 4.0 RELEASE --
+-- FRONTLINES 5.0 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -25,6 +25,7 @@ declare global.player[1] with network priority low
 declare object.timer[0] = script_option[3]
 declare object.timer[1] = 3
 declare object.timer[2] = 0
+declare object.timer[3] = 1
 declare object.number[0] with network priority low
 declare object.number[1] with network priority low
 declare object.number[2] with network priority low
@@ -78,6 +79,7 @@ alias elite_spec_ops_traits = script_traits[2]
 alias elite_ultra_traits = script_traits[3]
 alias elite_royal_traits = script_traits[4]
 alias elite_zealot_traits = script_traits[5]
+alias elite_general_traits = script_traits[15]
 alias spartan_marksman_traits = script_traits[6]
 alias ability_overcharge_traits = script_traits[7]
 alias ability_berserk_traits = script_traits[8]
@@ -129,7 +131,8 @@ for each player do
 		if current_player.vo_timer.is_zero() then
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
-			game.show_message_to(current_player, none, "Frontlines 4.0 release by CantFunkUp")
+			game.show_message_to(current_player, none, "Join MCC gametypers: https://discord.gg/FRbyECajYm")
+			game.show_message_to(current_player, none, "Frontlines 5.0 by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
@@ -434,12 +437,11 @@ do
 			for each player do
 				if current_player.team == team[0] then 
 					current_player.set_round_card_text("Spartan")
-					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
 				if current_player.team == team[1] then 
 					current_player.set_round_card_text("Elite")
-					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
+				current_player.set_round_card_title("Capture territories to advance the frontline.\r\nJoin MCC Gametypers: https://discord.gg/FRbyECajYm")
 			end
 		end 
 		for each object with label "frontline" do 
@@ -857,7 +859,7 @@ end
 -- Dynamic kill zones
 function attach_soft_kill()
     current_player.softkill_object = current_player.biped.place_at_me(soft_kill_boundary, none, never_garbage_collect, 0, 0, 0, none)
-    current_player.softkill_object.set_shape(sphere, 2)
+    current_player.softkill_object.set_shape(sphere, 5)
     current_player.softkill_object.attach_to(current_player.biped, 0, 0, 0, absolute)
     temp_object = current_player.softkill_object
 end
@@ -1036,9 +1038,71 @@ end
 for each player do
 	temp_object = current_player.try_get_vehicle()
 	temp_object2 = current_player.try_get_weapon(primary)
-	if temp_object.has_forge_label("damage_boost") or temp_object2.has_forge_label("damage_boost") then
+	if temp_object.has_forge_label("bravo_damage") or temp_object2.has_forge_label("bravo_damage") then
 		current_player.apply_traits(bravo_damage_traits)
 	end	
+	if temp_object.has_forge_label("alpha_damage") or temp_object2.has_forge_label("alpha_damage") then
+		current_player.apply_traits(alpha_damage_traits)
+	end
+	for each object with label "alpha_damage" do
+		if current_object.shape_contains(current_player.biped) then
+			current_player.apply_traits(alpha_damage_traits)
+		end
+	end
+	for each object with label "bravo_damage" do
+		if current_object.shape_contains(current_player.biped) then
+			current_player.apply_traits(bravo_damage_traits)
+		end
+	end	
+end
+
+--[[ 
+Mayday system
+Air vehicles shouldn't explode instantly if their health is less than 10
+They will instead fall out of the sky and detonate after a few seconds
+It will look really cool
+--]]
+for each object do
+	alias doomsday_timer = object.timer[1]
+	alias mayday = object.number[0]
+	alias physics_obj = object.object[0]
+	if current_object.is_of_type(falcon) or current_object.is_of_type(banshee) then
+		temp_int = current_object.health
+		if temp_int <= 10 and current_object.mayday == 0 then
+			current_object.mayday = 1
+			--[[
+			Attach it to a dummy vehicle so that it can't be controlled and it just falls
+			We want the vehcile to keep it's intertia after being attached,
+			so attach the dummy vehicle to it first then swap. 
+			--]]
+			if current_object.is_of_type(falcon) then
+				temp_object = current_object.place_at_me(falcon, none, suppress_effect, 0, 0, 0, default)
+			end
+			if current_object.is_of_type(banshee) then
+				temp_object = current_object.place_at_me(banshee, none, suppress_effect, 0, 0, 0, default)
+			end
+			temp_object.set_scale(1)
+			temp_object.attach_to(current_object, 0, 0, 0, absolute)
+			temp_object.detach()
+			temp_object.copy_rotation_from(current_object, true)
+			temp_object2 = temp_object.place_at_me(sound_emitter_alarm_1, none, suppress_effect, 0, 0, 0, default)
+			temp_object2.attach_to(temp_object, 0, 0, 0, absolute)
+			current_object.attach_to(temp_object, 0, 0, 0, absolute)
+			current_object.physics_obj = temp_object
+		end
+		if current_object.mayday == 1 then
+			current_object.doomsday_timer.set_rate(-100%)
+			current_object.set_invincibility(1)
+			if current_object.doomsday_timer.is_zero() then
+				current_object.detach()
+				current_object.physics_obj.delete()
+				current_object.set_invincibility(0)
+			end
+			if current_object.doomsday_timer.is_zero() then
+				current_object.kill(false)
+			end
+		end
+	end
 end
 
 --=== CLASS SYSTEM ===--
@@ -1057,7 +1121,7 @@ enum class
     grenadier 
     marksman 
     juggernaut
-	--general
+	general
 end
 
 function save_player_info()
@@ -1086,7 +1150,6 @@ function place_zealot()
 end
 
 -- Class detection
---TODO: make this optional
 for each player do
 	current_player.player[0] = no_player
     if current_player.is_elite() and current_player.biped != no_object then
@@ -1307,6 +1370,9 @@ for each player do
     if temp_object.class == class.zealot then
         current_player.apply_traits(elite_zealot_traits)
     end
+	if temp_object.class == class.general then
+		current_player.apply_traits(elite_general_traits)
+	end
 	if temp_object.class == class.marksman then
         current_player.apply_traits(spartan_marksman_traits)
     end
@@ -1329,10 +1395,6 @@ for each player do
 				end
 			end
         end
-		-- if temp_int > 0 then
-		-- 	script_widget[3].set_visibility(temp_player, true)
-		-- 	script_widget[3].set_text("Fortifying allies")
-		-- end
     end
     if temp_object.class == class.grenadier then
         current_player.apply_traits(spartan_grenadier_traits)
@@ -1359,21 +1421,29 @@ for each player do
 	end
 end
 
---TODO: --Powerup (Finish for Frontlines 5.0. Spawn sequences should allow you to change between power weapons).
--- for each object with label "powerup" do
--- 	for each player do
--- 		if current_player.is_elite() and current_object.shape_contains(current_player.biped) then
--- 			current_object.delete()
--- 			temp_object = current_player.biped
--- 			temp_object2 = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, general)
--- 			current_player.set_biped(temp_object2)
--- 			temp_object.delete()
--- 			temp_object = temp_object2.place_between_me_and(temp_object2, evade, 0)
--- 			current_player.plasma_grenades = 2
--- 			temp_object2.class = class.general
--- 		end
--- 	end
--- end
+--Powerup - Spawn sequences allow you to change between power weapons
+for each object with label "powerup" do
+	for each player do
+		if current_player.is_elite() and current_object.shape_contains(current_player.biped) then
+
+			alias old_biped = allocate temporary object
+			alias evade = old_biped
+			alias 
+			alias new_biped = allocate temporary object
+			old_biped = current_player.biped
+			new_biped = current_player.biped.place_at_me(elite, none, none, 0, 0, 0, general)
+			current_player.set_biped(new_biped)
+			old_biped.delete()
+			evade = new_biped.place_between_me_and(temp_object2, evade, 0)
+			current_player.plasma_grenades = 2
+			new_biped.class = class.general
+			current_player.biped.remove_weapon(primary, true)
+			current_player.biped.remove_weapon(secondary, true)
+			
+			current_object.delete()
+		end
+	end
+end
 
 -- Anti-tryhard
 if script_option[6] == 1 then
@@ -1403,7 +1473,7 @@ if script_option[6] == 1 then
 		temp_object = current_player.biped
 		temp_object2 = current_player.try_get_weapon(primary)
 		if temp_object.class == class.marksman and temp_object2 != no_object then
-			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) then
+			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) or not temp_object2.is_of_type(bomb) then
 				current_player.biped.remove_weapon(primary, false)
 				game.show_message_to(current_player, none, "Weapon prohibited")
 			end
@@ -1413,15 +1483,51 @@ end
 
 -- Troop vehicles
 for each object with label "troop" do
+	alias health_changed = object.number[1]
 	current_object.set_spawn_location_permissions(allies)
+	current_object.set_waypoint_visibility(allies)
+	current_object.set_waypoint_text("Mobile respawn")
+	if current_object.health_changed == 0 then
+		if not current_object.is_of_type(falcon) then
 	temp_int = current_object.health
 	temp_int *= 3
 	current_object.health = temp_int
+		end
+		current_object.health_changed = 1
+	end
 	temp_object = current_object
+	if current_object.is_of_type(scorpion) then
 	for each object do
 		temp_int = current_object.get_distance_to(temp_object)
-		if temp_int == 0 and not current_object.is_of_type(spartan) and not current_object.is_of_type(elite) then
+		if temp_int == 0 and not current_object.is_of_type(spartan) and not current_object.is_of_type(elite) and current_object != temp_object then
 			current_object.delete()
+		end
+		end
+	end
+	for each player do
+		alias vehicle = allocate temporary object
+		vehicle = current_player.try_get_vehicle()
+		if vehicle == current_object and current_player.team != current_object.team then
+			current_player.biped.detach()
+			game.show_message_to(current_player, none, "This vehicle doesn't belong to your team")
+		end
+	end
+	if current_object.is_of_type(falcon) then
+		current_object.set_boundary(sphere, 60)
+	end
+end
+
+-- Troop falcon "catch" system
+for each player do
+	alias catch_timer = object.timer[3]
+	alias current_biped = allocate temporary object
+	current_biped = current_player.biped
+	current_biped.catch_timer.set_rate(-100%)
+	if not current_biped.catch_timer.is_zero() then
+		for each object with label "troop" do
+			if current_object.is_of_type(falcon) and current_object.shape_contains(current_player.biped) then
+				current_player.force_into_vehicle(current_object)
+			end
 		end
 	end
 end
@@ -1508,12 +1614,6 @@ for each object with label "scale" do
 		current_object.shadow_parent.copy_rotation_from(current_object, false)
 		current_object.attach_to(current_object.shadow_parent, 0, 0, 0, relative)
 	end
-	-- Pink team invincibility
-	-- I think this was supposed to make objects invincible at least, 
-	-- but it doesn't seem like Weesee added that to these standalone scripts.
-	if current_object.team == team[7] then
-		current_object.set_invincibility(1)
-	end
 end
 
 ------------------------------------
@@ -1543,12 +1643,6 @@ declare spawner_obj with network priority low
 
 for each object with label "spawner" do --Spawns random stuff
 	if current_object.object[0] == no_object then
-		if current_object.spawn_sequence == 7 then
-			current_object.object[0] = current_object.place_at_me(spartan, none, never_garbage_collect, 0, 0, 0, player_skull) --Spartan
-		end
-		if current_object.spawn_sequence == 8 then
-			current_object.object[0] = current_object.place_at_me(elite, none, never_garbage_collect, 0, 0, 0, jetpack) --Elite
-		end
 		if current_object.spawn_sequence == 9 then
 			current_object.object[0] = current_object.place_at_me(particle_emitter_fire, none, never_garbage_collect, 0, 0, 0, jetpack) --Elite
 		end
