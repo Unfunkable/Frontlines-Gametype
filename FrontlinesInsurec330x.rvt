@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 4.0 RELEASE --
+-- FRONTLINES 5.0 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -25,6 +25,7 @@ declare global.player[1] with network priority low
 declare object.timer[0] = script_option[3]
 declare object.timer[1] = 3
 declare object.timer[2] = 0
+declare object.timer[3] = 1
 declare object.number[0] with network priority low
 declare object.number[1] with network priority low
 declare object.number[2] with network priority low
@@ -120,7 +121,8 @@ for each player do
 		if current_player.vo_timer.is_zero() then
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
-			game.show_message_to(current_player, none, "Frontlines 4.0 release by CantFunkUp")
+			game.show_message_to(current_player, none, "Join MCC gametypers: https://discord.gg/FRbyECajYm")
+			game.show_message_to(current_player, none, "Frontlines 5.0 by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
@@ -423,12 +425,11 @@ do
 			for each player do
 				if current_player.team == team[0] then 
 					current_player.set_round_card_text("UNSC")
-					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
 				if current_player.team == team[1] then 
 					current_player.set_round_card_text("Insurrectionists")
-					current_player.set_round_card_title("Capture territories to advance the frontline.")
 				end
+				current_player.set_round_card_title("Capture territories to advance the frontline.\r\nJoin MCC Gametypers: https://discord.gg/FRbyECajYm")
 			end
 		end 
 		for each object with label "frontline" do 
@@ -830,7 +831,7 @@ end
 -- Dynamic kill zones
 function attach_soft_kill()
     current_player.softkill_object = current_player.biped.place_at_me(soft_kill_boundary, none, never_garbage_collect, 0, 0, 0, none)
-    current_player.softkill_object.set_shape(sphere, 2)
+    current_player.softkill_object.set_shape(sphere, 5)
     current_player.softkill_object.attach_to(current_player.biped, 0, 0, 0, absolute)
     temp_object = current_player.softkill_object
 end
@@ -1009,10 +1010,100 @@ end
 for each player do
 	temp_object = current_player.try_get_vehicle()
 	temp_object2 = current_player.try_get_weapon(primary)
-	if temp_object.has_forge_label("damage_boost") or temp_object2.has_forge_label("damage_boost") then
+	if temp_object.has_forge_label("bravo_damage") or temp_object2.has_forge_label("bravo_damage") then
 		current_player.apply_traits(bravo_damage_traits)
 	end	
+	if temp_object.has_forge_label("alpha_damage") or temp_object2.has_forge_label("alpha_damage") then
+		current_player.apply_traits(alpha_damage_traits)
+	end
+	for each object with label "alpha_damage" do
+		if current_object.shape_contains(current_player.biped) then
+			current_player.apply_traits(alpha_damage_traits)
+		end
+	end
+	for each object with label "bravo_damage" do
+		if current_object.shape_contains(current_player.biped) then
+			current_player.apply_traits(bravo_damage_traits)
+		end
+	end
 end
+
+--[[ 
+Mayday system
+Air vehicles shouldn't explode instantly if their health is less than 10
+They will instead fall out of the sky and detonate after a few seconds
+It will look really cool
+--]]
+for each object do
+	alias doomsday_timer = object.timer[1]
+	alias mayday = object.number[0]
+	alias physics_obj = object.object[0]
+	if current_object.is_of_type(falcon) or current_object.is_of_type(banshee) then
+		temp_int = current_object.health
+		if temp_int <= 10 and current_object.mayday == 0 then
+			current_object.mayday = 1
+			--[[
+			Attach it to a dummy falcon so that it can't be controlled and it just falls
+			We want the vehcile to keep it's intertia after being attached,
+			so attach the dummy falcon to it first then swap. 
+			--]]
+			if current_object.is_of_type(falcon) then
+				temp_object = current_object.place_at_me(falcon, none, suppress_effect, 0, 0, 0, default)
+			end
+			if current_object.is_of_type(banshee) then
+				temp_object = current_object.place_at_me(banshee, none, suppress_effect, 0, 0, 0, default)
+			end
+			temp_object.set_scale(1)
+			temp_object.attach_to(current_object, 0, 0, 0, absolute)
+			temp_object.detach()
+			temp_object.copy_rotation_from(current_object, true)
+			temp_object2 = temp_object.place_at_me(sound_emitter_alarm_1, none, suppress_effect, 0, 0, 0, default)
+			temp_object2.attach_to(temp_object, 0, 0, 0, absolute)
+			current_object.attach_to(temp_object, 0, 0, 0, absolute)
+			current_object.physics_obj = temp_object
+		end
+		if current_object.mayday == 1 then
+			current_object.doomsday_timer.set_rate(-100%)
+			current_object.set_invincibility(1)
+			if current_object.doomsday_timer.is_zero() then
+				current_object.detach()
+				current_object.physics_obj.delete()
+				current_object.set_invincibility(0)
+			end
+			if current_object.doomsday_timer.is_zero() then
+				current_object.kill(false)
+			end
+		end
+	end
+end
+
+--[[ Airstrikes
+Let a player control a sabre for a short period of time ]]
+--[[ for each player do
+	alias real_biped = player.object[1]
+	for each object with label "airstrike" do
+		if current_object.shape_contains(current_player.biped) then
+			current_object.delete()
+			current_player.real_biped = current_player.biped
+			for each object with label "airstrike_spawn" do
+				alias cas = allocate temporary object
+				alias pilot = allocate temporary object
+				cas = current_object.place_at_me(sabre, none, suppress_effect, 0, 0, 0, default)
+				cas.copy_rotation_from(current_object, true)
+				pilot = current_object.place_at_me(spartan, none, suppress_effect, 0, 0, 0, default)
+				current_player.set_biped(pilot)
+				current_player.ability_timer = 10
+				current_player.ability_timer.set_rate(-100%)
+			end
+		end
+	end
+	alias current_vehicle = allocate temporary object
+	current_vehicle = current_player.try_get_vehicle()
+	if current_vehicle.is_of_type(sabre) and current_player.ability_timer.is_zero() then
+		current_player.set_biped(current_player.object[1])
+		current_vehicle.delete()
+	end
+end ]]
 
 --=== CLASS SYSTEM ===--
 
@@ -1050,7 +1141,6 @@ function apply_player_info()
 end
 
 -- Class detection
---TODO: make this optional
 for each player do
 	current_player.player[0] = no_player
     if current_player.biped != no_object then
@@ -1153,7 +1243,7 @@ if script_option[6] == 1 then
 		temp_object = current_player.biped
 		temp_object2 = current_player.try_get_weapon(primary)
 		if temp_object.class == class.marksman and temp_object2 != no_object then
-			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) then
+			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) or not temp_object2.is_of_type(bomb) then
 				current_player.biped.remove_weapon(primary, false)
 				game.show_message_to(current_player, none, "Weapon prohibited")
 			end
@@ -1163,25 +1253,51 @@ end
 
 -- Troop vehicles
 for each object with label "troop" do
+	alias health_changed = object.number[1]
 	current_object.set_spawn_location_permissions(allies)
-	temp_int = current_object.health
-	temp_int *= 3
-	current_object.health = temp_int
-	temp_object = current_object
-	for each object do
-		temp_int = current_object.get_distance_to(temp_object)
-		if temp_int == 0 and not current_object.is_of_type(spartan) and not current_object.is_of_type(elite) then
-			current_object.delete()
+	current_object.set_waypoint_visibility(allies)
+	current_object.set_waypoint_text("Mobile respawn")
+	if current_object.health_changed == 0 then
+		if not current_object.is_of_type(falcon) then
+			temp_int = current_object.health
+			temp_int *= 3
+			current_object.health = temp_int
 		end
+		current_object.health_changed = 1
+	end
+	temp_object = current_object
+	if current_object.is_of_type(scorpion) then
+		for each object do
+			temp_int = current_object.get_distance_to(temp_object)
+			if temp_int == 0 and not current_object.is_of_type(spartan) and current_object != temp_object then
+				current_object.delete()
+			end
+		end
+	end
+	for each player do
+		alias vehicle = allocate temporary object
+		vehicle = current_player.try_get_vehicle()
+		if vehicle == current_object and current_player.team != current_object.team then
+			current_player.biped.detach()
+			game.show_message_to(current_player, none, "This vehicle doesn't belong to your team")
+		end
+	end
+	if current_object.is_of_type(falcon) then
+		current_object.set_boundary(sphere, 60)
 	end
 end
 
--- Plasma Rifle buff
+-- Troop falcon "catch" system
 for each player do
-	if script_option[8] == 1 then
-		temp_object = current_player.try_get_weapon(primary)
-		if temp_object.is_of_type(plasma_rifle) then
-			current_player.apply_traits(alpha_damage_traits)
+	alias catch_timer = object.timer[3]
+	alias current_biped = allocate temporary object
+	current_biped = current_player.biped
+	current_biped.catch_timer.set_rate(-100%)
+	if not current_biped.catch_timer.is_zero() then
+		for each object with label "troop" do
+			if current_object.is_of_type(falcon) and current_object.shape_contains(current_player.biped) then
+				current_player.force_into_vehicle(current_object)
+			end
 		end
 	end
 end
@@ -1189,15 +1305,6 @@ end
 ---== ANVIL EDITOR 1.1 ==---
 -- this is sort of a mess cause I tried merging the anvil stuff with 330x stuff
 -- it works but idk what's going on here tbh
-
-for each object with label "scale" do
-	-- Pink team invincibility
-	-- I think this was supposed to make objects invincible at least, 
-	-- but it doesn't seem like Weesee added that to these standalone scripts.
-	if current_object.team == team[7] then
-		current_object.set_invincibility(1)
-	end
-end
 
 ------------------------------------------
 --Aliases to adjust to your own gametype--
@@ -1500,14 +1607,6 @@ end
 			script_widget[1].set_visibility(current_player, false)
 		end
 		temp_object = current_player.biped
-		if temp_object.class == class.major and current_player.ability_timer > 0 then
-			script_widget[0].set_visibility(current_player, true)
-			script_widget[0].set_text("OVERCHARGE %n\r\nWeapons won't overheat", hud_player.ability_timer)
-		end
-		if temp_object.class == class.ultra and current_player.ability_timer > 0 then
-			script_widget[1].set_visibility(current_player, true)
-			script_widget[1].set_text("BERSERK %n", hud_player.ability_timer)
-		end
 		if current_player.player[0] == no_player then
 			script_widget[2].set_visibility(current_player, false)
 		end
