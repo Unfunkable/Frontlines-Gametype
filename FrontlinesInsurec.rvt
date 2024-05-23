@@ -1215,7 +1215,7 @@ if script_option[6] == 1 then
 		temp_object = current_player.biped
 		temp_object2 = current_player.try_get_weapon(primary)
 		if temp_object.class == class.marksman and temp_object2 != no_object then
-			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) or not temp_object2.is_of_type(bomb) then
+			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) and not temp_object2.is_of_type(bomb) then
 				current_player.biped.remove_weapon(primary, false)
 				game.show_message_to(current_player, none, "Weapon prohibited")
 			end
@@ -1226,24 +1226,28 @@ end
 -- Troop vehicles
 for each object with label "troop" do
 	alias health_changed = object.number[1]
+	alias disarmed = object.number[2]
 	current_object.set_spawn_location_permissions(allies)
 	current_object.set_waypoint_visibility(allies)
 	current_object.set_waypoint_text("Mobile respawn")
 	if current_object.health_changed == 0 then
 		if not current_object.is_of_type(falcon) then
-	temp_int = current_object.health
-	temp_int *= 3
-	current_object.health = temp_int
+			temp_int = current_object.health
+			temp_int *= 3
+			current_object.health = temp_int
 		end
 		current_object.health_changed = 1
 	end
 	temp_object = current_object
 	if current_object.is_of_type(scorpion) then
-	for each object do
-		temp_int = current_object.get_distance_to(temp_object)
-			if temp_int == 0 and not current_object.is_of_type(spartan) and current_object != temp_object then
-			current_object.delete()
-		end
+		for each object do
+			if temp_object.disarmed == 0 then
+				temp_int = current_object.get_distance_to(temp_object)
+				if temp_int == 0 and current_object != temp_object then
+					current_object.delete()
+				end
+			end
+			temp_object.disarmed = 1
 		end
 	end
 	for each player do

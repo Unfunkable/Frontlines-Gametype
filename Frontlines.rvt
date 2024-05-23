@@ -1422,7 +1422,7 @@ for each player do
 end
 
 --Powerup - Spawn sequences allow you to change between power weapons
-for each object with label "powerup" do
+--[[ for each object with label "powerup" do
 	for each player do
 		if current_player.is_elite() and current_object.shape_contains(current_player.biped) then
 
@@ -1443,7 +1443,7 @@ for each object with label "powerup" do
 			current_object.delete()
 		end
 	end
-end
+end ]]
 
 -- Anti-tryhard
 if script_option[6] == 1 then
@@ -1473,7 +1473,7 @@ if script_option[6] == 1 then
 		temp_object = current_player.biped
 		temp_object2 = current_player.try_get_weapon(primary)
 		if temp_object.class == class.marksman and temp_object2 != no_object then
-			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) or not temp_object2.is_of_type(bomb) then
+			if not temp_object2.is_of_type(dmr) and not temp_object2.is_of_type(magnum) and not temp_object2.is_of_type(bomb) then
 				current_player.biped.remove_weapon(primary, false)
 				game.show_message_to(current_player, none, "Weapon prohibited")
 			end
