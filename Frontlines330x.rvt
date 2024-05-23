@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 5.0 RELEASE --
+-- FRONTLINES 5.1 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -132,7 +132,7 @@ for each player do
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
 			game.show_message_to(current_player, none, "Join MCC gametypers: https://discord.gg/FRbyECajYm")
-			game.show_message_to(current_player, none, "Frontlines 5.0 by CantFunkUp")
+			game.show_message_to(current_player, none, "Frontlines 5.1 by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
