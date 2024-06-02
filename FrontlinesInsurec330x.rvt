@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 5.2 RELEASE --
+-- FRONTLINES 5.3 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -122,7 +122,7 @@ for each player do
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
 			game.show_message_to(current_player, none, "Join MCC gametypers: https://discord.gg/FRbyECajYm")
-			game.show_message_to(current_player, none, "Frontlines 5.2 by CantFunkUp")
+			game.show_message_to(current_player, none, "Frontlines 5.3 by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
@@ -1257,7 +1257,8 @@ for each object with label "troop" do
 	alias health_changed = object.number[1]
 	alias disarmed = object.number[2]
 	if current_object.spawn_obj == no_object then
-		current_object.spawn_obj = current_object.place_at_me(hill_marker, none, none, -10, 0, 10, default)
+		current_object.spawn_obj = current_object.place_at_me(hill_marker, none, none, 0, 0, 0, default)
+		current_object.spawn_obj.attach_to(current_object, -10, 0, 10, relative)
 		alias spawn_obj = allocate temporary object
 		spawn_obj = current_object.spawn_obj
 		spawn_obj.team = current_object.team
@@ -1315,9 +1316,7 @@ end
 
 on object death: do
 	alias spawn_obj = object.object[2]
-	if killed_object.spawn_obj != no_object then
-		killed_object.spawn_obj.delete()
-	end
+	killed_object.spawn_obj.delete()
 end
 
 ---== ANVIL EDITOR 1.1 ==---
@@ -1584,6 +1583,9 @@ end
 		   end
 		   if current_object.spawn_sequence < -20 or current_object.spawn_sequence > 0 then 
 			  current_object.obj_scale = 100
+			  if current_object.team == team[0] then
+				current_object.obj_scale = 32732
+			  end
 			  optimized_330x()
 		   end
 		   current_object.set_scale(current_object.obj_scale)

@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 5.2 RELEASE --
+-- FRONTLINES 5.3 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -132,7 +132,7 @@ for each player do
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
 			game.show_message_to(current_player, none, "Join MCC gametypers: https://discord.gg/FRbyECajYm")
-			game.show_message_to(current_player, none, "Frontlines 5.2 by CantFunkUp")
+			game.show_message_to(current_player, none, "Frontlines 5.3 by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
@@ -1508,8 +1508,17 @@ end
 
 -- Troop vehicles
 for each object with label "troop" do
+	alias spawn_obj = object.object[2]
 	alias health_changed = object.number[1]
-	current_object.set_spawn_location_permissions(allies)
+	alias disarmed = object.number[2]
+	if current_object.spawn_obj == no_object then
+		current_object.spawn_obj = current_object.place_at_me(hill_marker, none, none, 0, 0, 0, default)
+		current_object.spawn_obj.attach_to(current_object, -10, 0, 10, relative)
+		alias spawn_obj = allocate temporary object
+		spawn_obj = current_object.spawn_obj
+		spawn_obj.team = current_object.team
+		spawn_obj.set_spawn_location_permissions(allies)
+	end
 	current_object.set_waypoint_visibility(allies)
 	current_object.set_waypoint_text("Mobile respawn")
 	if current_object.health_changed == 0 then
@@ -1523,9 +1532,12 @@ for each object with label "troop" do
 	temp_object = current_object
 	if current_object.is_of_type(scorpion) then
 	for each object do
+			if temp_object.disarmed == 0 then
 		temp_int = current_object.get_distance_to(temp_object)
-		if temp_int == 0 and not current_object.is_of_type(spartan) and not current_object.is_of_type(elite) and current_object != temp_object then
+				if temp_int == 0 and current_object != temp_object then
 			current_object.delete()
+					temp_object.disarmed = 1
+				end
 		end
 		end
 	end
@@ -1538,7 +1550,7 @@ for each object with label "troop" do
 		end
 	end
 	if current_object.is_of_type(falcon) then
-		current_object.set_boundary(sphere, 60)
+		current_object.spawn_obj.set_boundary(sphere, 60)
 	end
 end
 
@@ -1550,11 +1562,16 @@ for each player do
 	current_biped.catch_timer.set_rate(-100%)
 	if not current_biped.catch_timer.is_zero() then
 		for each object with label "troop" do
-			if current_object.is_of_type(falcon) and current_object.shape_contains(current_player.biped) then
+			if current_object.is_of_type(falcon) and current_object.spawn_obj.shape_contains(current_player.biped) then
 				current_player.force_into_vehicle(current_object)
 			end
 		end
 	end
+end
+
+on object death: do
+	alias spawn_obj = object.object[2]
+	killed_object.spawn_obj.delete()
 end
 
 -- Plasma Rifle buff
