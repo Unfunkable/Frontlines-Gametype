@@ -1,5 +1,5 @@
 ----------------------------
--- FRONTLINES 5.3 RELEASE --
+-- FRONTLINES 6.0 RELEASE --
 -- 		by CantFunkUp	  --
 ----------------------------
 
@@ -73,6 +73,11 @@ alias out_of_bounds = player.number[0]
 alias heard_vo = player.number[1]
 alias vo_timer = player.timer[2]
 
+alias eliminated = allocate player.number
+declare player.eliminated with network priority local
+alias lms = allocate team.player
+declare team.lms with network priority local
+
 alias alpha_damage_traits = script_traits[0]
 alias elite_major_traits = script_traits[1]
 alias elite_spec_ops_traits = script_traits[2]
@@ -88,6 +93,8 @@ alias ability_fortify_traits = script_traits[11]
 alias spartan_grenadier_traits = script_traits[12]
 alias bravo_damage_traits = script_traits[13]
 alias spartan_green_traits = script_traits[14]
+
+alias eliminated_traits = script_traits[15]
 
 --Loadout tier timers
 do
@@ -122,7 +129,7 @@ for each player do
 			send_incident(invasion_game_start, current_player, current_player)
 			send_incident(terr_game_start, current_player, current_player)
 			game.show_message_to(current_player, none, "Join MCC gametypers: https://discord.gg/FRbyECajYm")
-			game.show_message_to(current_player, none, "Frontlines 5.3 by CantFunkUp")
+			game.show_message_to(current_player, none, "Frontlines 6.0 by CantFunkUp")
 			current_player.heard_vo = 1
 		end
 	end
@@ -488,8 +495,10 @@ for each player do
 end
 
 -- Turns on coop spawning to allow respawning at territories.
-for each team do
-	current_team.set_co_op_spawning(true)
+for each player do
+	if current_player.eliminated == 0 then
+		current_player.set_co_op_spawning(true)
+	end
 end
 
 for each object with label "pregame" do 
@@ -987,15 +996,9 @@ for each player do
 	end
 end
 
--- When tickets for a team are depleted, end the game, and have the other team win
-do
-	if team[0].score <= 0 and phase_objective != -1 and script_option[2] == 0 then
-		elite_victory()
-		ticket_victory()
-	end
-	if team[1].score <= 0 and phase_objective != -1 and script_option[2] == 0 then
-		spartan_victory()
-		ticket_victory()
+for each team do
+	if current_team.score < 0 then
+		current_team.score = 0
 	end
 end
 
@@ -1076,6 +1079,85 @@ for each object do
 		end
 	end
 end
+
+-- Last Stand System --
+
+function prevent_respawn()
+	current_player.set_co_op_spawning(false)
+	current_player.apply_traits(eliminated_traits)
+	if current_player.biped != no_object then
+		current_player.biped.delete()
+	end
+end
+
+for each team do
+
+	if current_team.score == 0 then
+
+		for each player do
+			if current_player.team == current_team then
+				if current_player.killer_type_is(kill|suicide|guardians|betrayal|quit) then
+					current_player.eliminated = 1
+				end
+				current_player.biped.set_waypoint_visibility(everyone)
+				script_widget[3].set_text("LAST STAND - RESPAWNS DISABLED")
+				script_widget[3].set_visibility(current_player, true)
+			end
+		end
+
+		-- Count remaining survivors
+		alias survivors = allocate temporary number
+		survivors = 0
+
+		for each player do
+			if current_player.team == current_team and current_player.eliminated == 0 then
+				survivors += 1
+			end
+		end
+
+		if survivors == 0 and phase_objective != -1 then
+			if current_team == team[0] then
+				elite_victory()
+				ticket_victory()
+			end
+			if current_team == team[1] then
+				spartan_victory()
+				ticket_victory()
+			end
+		end
+
+		if survivors == 1 then
+			if current_team.lms == no_player then
+				for each player do
+					if current_player.team == current_team and current_player.eliminated == 0 then
+						send_incident(inf_last_man, current_player, all_players)
+						current_team.lms = current_player
+					end
+				end
+			end
+		end
+
+	end
+
+	if current_team.score > 0 then
+		current_team.lms = no_player
+		for each player do
+			if current_player.team == current_team then
+				current_player.eliminated = 0
+				current_player.biped.set_waypoint_visibility(default)
+				script_widget[3].set_visibility(current_player, false)
+			end
+		end
+	end
+
+end
+
+for each player do
+	if current_player.eliminated == 1 then
+		prevent_respawn()
+	end
+end
+
 
 --=== CLASS SYSTEM ===--
 
