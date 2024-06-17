@@ -1558,6 +1558,7 @@ end
 for each player do
 	alias catch_timer = object.timer[3]
 	alias current_biped = allocate temporary object
+	alias spawn_obj = object.object[2]
 	current_biped = current_player.biped
 	current_biped.catch_timer.set_rate(-100%)
 	if not current_biped.catch_timer.is_zero() then
