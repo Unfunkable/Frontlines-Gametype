@@ -1451,9 +1451,6 @@ for each player do
     if temp_object.class == class.zealot then
         current_player.apply_traits(elite_zealot_traits)
     end
-	if temp_object.class == class.general then
-		current_player.apply_traits(elite_general_traits)
-	end
 	if temp_object.class == class.marksman then
         current_player.apply_traits(spartan_marksman_traits)
     end

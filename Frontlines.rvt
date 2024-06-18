@@ -1451,9 +1451,6 @@ for each player do
     if temp_object.class == class.zealot then
         current_player.apply_traits(elite_zealot_traits)
     end
-	if temp_object.class == class.general then
-		current_player.apply_traits(elite_general_traits)
-	end
 	if temp_object.class == class.marksman then
         current_player.apply_traits(spartan_marksman_traits)
     end
@@ -1767,9 +1764,6 @@ declare spawner_obj with network priority low
 
 for each object with label "spawner" do --Spawns random stuff
 	if current_object.object[0] == no_object then
-		if current_object.spawn_sequence == 9 then
-			current_object.object[0] = current_object.place_at_me(particle_emitter_fire, none, never_garbage_collect, 0, 0, 0, jetpack) --Elite
-		end
 		if current_object.spawn_sequence == 10 then
 			current_object.object[0] = current_object.place_at_me(pelican_scenery, none, never_garbage_collect, 0, 0, 0, none) --scenery pelican with turret
 			current_object.object[0].attach_to(current_object, 0, 0, 0, relative)
@@ -1843,21 +1837,6 @@ for each object with label "spawner" do --Spawns random stuff
 			current_object.object[0] = current_object.place_at_me(phantom, none, never_garbage_collect, 0, 0, 0, none)						--phantom with turrets
 			current_object.object[0].attach_to(current_object, 0, 0, 0, relative)
 		end
-		if current_object.spawn_sequence == 21 then
-			current_object.object[0] = current_object.place_at_me(phantom_device, none, never_garbage_collect, 0, 0, 0, none) 			--Phantom Device (Boneyard)
-		end
-		if current_object.spawn_sequence == 22 then
-			current_object.object[0] = current_object.place_at_me(longsword, none, never_garbage_collect, 0, 0, 0, none) 			--longsword (Boneyard)
-		end
-		if current_object.spawn_sequence == 23 then
-			current_object.object[0] = current_object.place_at_me(unsc_data_core_holder, none, never_garbage_collect, 0, 0, 0, none) 			--Boneyard Core Holder 
-		end
-		if current_object.spawn_sequence == 24 then
-			current_object.object[0] = current_object.place_at_me(covenant_power_module_stand, none, never_garbage_collect, 0, 0, 0, none) 			--Spire Core Holder 
-		end
-		if current_object.spawn_sequence == 25 then
-			current_object.object[0] = current_object.place_at_me(pelican, none, never_garbage_collect, 0, 0, 0, none) 			--Pelican (Spire)
-		end
 		if current_object.spawn_sequence > 20 then
 			current_object.object[0].attach_to(current_object, 0, 0, 0, relative)
 			current_object.object[0].detach()
@@ -1874,67 +1853,6 @@ for each object with label "spawner" do --Spawns random stuff
 		for each object do
 			if global.object[0].shape_contains(current_object) and global.object[0] != current_object and not current_object.is_of_type(monitor) then
 				current_object.delete()
-			end
-		end
-	end
-	if current_object.spawn_sequence == -8 or current_object.spawn_sequence == -9 then --Invincibility Zones
-		spawner_obj = current_object
-		for each object do
-			if spawner_obj.shape_contains(current_object) then
-				if spawner_obj.team == current_object.team or spawner_obj.team == neutral_team then
-					if spawner_obj.spawn_sequence == -8 then --Invincibility
-						current_object.set_invincibility(1)
-					end
-					if spawner_obj.spawn_sequence == -9 then --Vincibility
-						current_object.set_invincibility(0)
-					end
-				end
-			end
-		end
-	end
-	--Animation Device Manipulation--
-	if current_object.spawn_sequence == -49 then
-		gauss_shade = current_object
-		for each object do
-			if gauss_shade.shape_contains(current_object) then
-				current_object.set_device_power(100)
-			end
-		end
-	end
-	if current_object.spawn_sequence < -49 then
-		gauss_shade = current_object
-		temp_int2 = current_object.spawn_sequence
-		temp_int2 *= -1
-		for each object with label "spawner" do --This is a switch
-			if current_object.spawn_sequence == temp_int2 and gauss_shade.object[3] == no_object then --Absolute value
-				gauss_shade.object[3] = current_object 
-				if gauss_shade.number[4] == 0 then
-					gauss_shade.number[4] = 1111
-				end
-				gauss_shade.number[3] = 1
-			end
-		end
-		--Handle the switch--
-		if current_object.object[3] == no_object then
-			if current_object.number[3] == 1 then
-				current_object.number[4] *= -1
-				current_object.number[3] = 2 --Only "flips" the number once
-			end
-		end
-		for each object do
-			if gauss_shade.shape_contains(current_object) then
-				if gauss_shade.number[4] == 0 then --No switch, just a zone
-					for each player do
-						if gauss_shade.shape_contains(current_player.biped) then
-							current_object.set_device_power(100)
-							current_object.set_device_position(100)
-						end
-					end
-				end
-				if gauss_shade.number[4] == -1111 then --The switch has been hit. If it's hit again, the device position naturally returns to 0
-					current_object.set_device_power(100)
-					current_object.set_device_position(100)
-				end
 			end
 		end
 	end
